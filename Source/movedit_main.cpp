@@ -12,6 +12,8 @@
 #include <vector>
 #include "ZenLib/Dir.h"
 #include "ZenLib/File.h"
+#include "CLI/Help.h"
+#include "Common/AdID.h"
 using namespace std;
 using namespace ZenLib;
 
@@ -20,32 +22,38 @@ const size_t BUFFER_SIZE_MAX = 0x10000000;
 int main(int argc, char* argv[])
 {
     if (argc < 2)
-    {
-        cout << "Usage: " << argv[0] << " FileName [options]" << endl;
-        cout << "Options" << endl;
-        cout << " -p, --par: modify PAR to 9:10 (--> DAR of 4:3)" << endl;
-        cout << " -w, --width-scale: modify width scale to 0.9" << endl;
-        cout << " -s, --simulate: No modification" << endl;
-        cout << endl;
-        cout << "if no option, information is displayed, no modification" << endl;
-        cout << "limitation: 720x480 or 720x486 or 720x576" << endl;
-        cout << endl;
-        cout << "return value:" << endl;
-        cout << ">=0: OK" << endl;
-        cout << "-1: Warning" << endl;
-        cout << "-2: Error" << endl;
-        return -1;
-    }
+        return Usage();
 
+    ZtringList FileNames;
     double wscale_New = 0;
     uint16_t par_h_New = 0;
     uint16_t par_v_New = 0;
     bool simulate = false;
-    for (int argp = 2; argp < argc; ++argp)
-    {
-        cout << argv[argp] << endl;
+    AdID AdID_Content;
+    bool AdID_Requested=false;
 
-        if (Ztring(argv[argp]) == __T("-p")
+    for (int argp = 1; argp < argc; ++argp)
+    {
+        if (Ztring(argv[argp]) == __T("-h")
+         || Ztring(argv[argp]) == __T("--help"))
+            return Help();
+        if (Ztring(argv[argp]) == __T("--help-adid"))
+            return Help_AdID();
+        if (Ztring(argv[argp]) == __T("--help-par"))
+            return Help_PAR();
+
+        if (argp+1<argc && Ztring(argv[argp]) == __T("--add-adid"))
+        {
+            AdID_Requested=true;
+            AdID_Content.Set(argv[argp+1]);
+        }
+        if (argp+1<argc && Ztring(argv[argp]) == __T("--add-adid-registry"))
+        {
+            AdID_Requested=true;
+            AdID_Content.SetRegistry(argv[argp+1]);
+        }
+        else if (Ztring(argv[argp]) == __T("-p")
+         || Ztring(argv[argp]) == __T("--par")
          || Ztring(argv[argp]) == __T("-par"))
         {
             par_h_New = 9;
@@ -57,6 +65,7 @@ int main(int argc, char* argv[])
             }
         }
         else if (Ztring(argv[argp]) == __T("-w")
+              || Ztring(argv[argp]) == __T("--width-scale")
               || Ztring(argv[argp]) == __T("-width-scale"))
         {
             //stringstream Scale_Xss;
@@ -76,19 +85,26 @@ int main(int argc, char* argv[])
         }
         else
         {
-            cout << "Unknown option " << endl;
-            return -1;
+            FileNames.push_back(argv[argp]);
         }
     }
-    cout << endl;
-    cout << endl;
 
-    ZtringList List = Dir::GetAllFileNames(argv[1]);
+    if (FileNames.empty())
+        return Usage();
+    if (AdID_Requested && !simulate)
+    {
+        cerr << "Ad-ID injection is not yet implemented, forcing simulation" << endl;
+        simulate=true;
+    }
+    ZtringList List;
+    for (size_t i=0; i<FileNames.size(); i++)
+        List+=Dir::GetAllFileNames(FileNames[i]);
     std::vector<Structure*> Structures;
     for (ZtringList::iterator Item = List.begin(); Item != List.end(); Item++)
     {
         File F;
-        cout << "Parsing " << Item->To_Local() << std::endl;
+        if (!AdID_Requested)
+            cout << "Parsing " << Item->To_Local() << std::endl;
         if (F.Open(*Item, File::Access_Read))
         {
 
@@ -147,6 +163,8 @@ int main(int argc, char* argv[])
     string FileNameFake;
     FileNameFake.resize(Max, __T(' '));
 
+    if (!AdID_Requested)
+    {
     cout << endl;
     cout << "Summary:" << endl;
     cout << "OK = file is correctly detected and does not need to be modified ('Yes') or is correctly detected and need to be modified ('Mod') or is correctly detected and need to be modified but not supported ('No') or there was a problem with it (empty)" << endl;
@@ -155,6 +173,9 @@ int main(int argc, char* argv[])
     cout << "w-scale = (old) width scale of the picture" << endl;
     cout << "w-scale|M = w-scale will be modified ('Y')" << endl;
     cout << FileNameFake << "| OK|  PAR|M|Width|w-scale|M|" << endl;
+    }
+    else
+        cout << FileNameFake << "| OK| Registry|Ad-ID value" << endl;
     ZtringList::iterator ItemName = List.begin();
     ZtringList ListNotDetected;
     ZtringList ListNotCorrected;
@@ -166,6 +187,24 @@ int main(int argc, char* argv[])
         // Name
         string Name = ItemName->To_Local();
         Name.resize(Max, __T(' '));
+
+        if (AdID_Requested)
+        {
+            cout << Name << '|';
+
+            AdID AdID_Content_Temp=AdID_Content;
+            AdID_Content_Temp.SetName(Name);
+
+            cout<< (AdID_Content_Temp.Validate()?"Yes":" No") << '|';
+
+            cout << AdID_Content_Temp.GetRegistry() << '|';
+
+            cout << (AdID_Content_Temp.ErrorMessage.empty()? AdID_Content_Temp.Get():AdID_Content_Temp.ErrorMessage) << endl;
+
+            ItemName++;
+
+            continue;
+        }
 
         if ((*Item)->IsOk)
         {

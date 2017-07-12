@@ -19,11 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Source\CLI\Help.cpp" />
+    <ClCompile Include="..\..\..\Source\Common\AdID.cpp" />
     <ClCompile Include="..\..\..\Source\movedit_atomread.cpp" />
     <ClCompile Include="..\..\..\Source\movedit_main.cpp" />
     <ClCompile Include="..\..\..\Source\movedit_structure.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\Source\CLI\Config.h" />
+    <ClInclude Include="..\..\..\Source\CLI\Help.h" />
+    <ClInclude Include="..\..\..\Source\Common\AdID.h" />
     <ClInclude Include="..\..\..\Source\movedit_atomread.h" />
     <ClInclude Include="..\..\..\Source\movedit_structure.h" />
   </ItemGroup>

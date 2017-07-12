@@ -185,7 +185,7 @@ void Structure::moov_trak_tkhd(atom* Up)
             Track->WidthScale = WidthScale_BeforeComma + WidthScale_AfterComma / 65536;
             Track->WidthScalePos = Up->StreamOffset + Up->HeaderSize + ExtraBytes + 0x28;
 
-            cout << " Width = " << Track->Width << ", Height = " << Track->Height << ", Width scale = " << setprecision(3) << fixed << setw(7) << Track->WidthScale << endl;
+            //cout << " Width = " << Track->Width << ", Height = " << Track->Height << ", Width scale = " << setprecision(3) << fixed << setw(7) << Track->WidthScale << endl;
     }
 }
 

@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\CLI">
+      <UniqueIdentifier>{f852dc75-639d-4268-b839-6e1b5445e016}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\CLI">
+      <UniqueIdentifier>{3814fa29-2c43-4774-a65e-39432359a938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Common">
+      <UniqueIdentifier>{148f697e-6fc7-4918-a982-0d1ff4d310d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Common">
+      <UniqueIdentifier>{5bffbf7f-e6a1-459a-8bf6-79e68c451749}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Source\movedit_atomread.cpp">
@@ -24,6 +36,12 @@
     <ClCompile Include="..\..\..\Source\movedit_structure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Source\CLI\Help.cpp">
+      <Filter>Source Files\CLI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Common\AdID.cpp">
+      <Filter>Source Files\Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Source\movedit_atomread.h">
@@ -31,6 +49,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\Source\movedit_structure.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\CLI\Help.h">
+      <Filter>Header Files\CLI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\CLI\Config.h">
+      <Filter>Header Files\CLI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Common\AdID.h">
+      <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
