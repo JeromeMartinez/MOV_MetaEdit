@@ -18,6 +18,7 @@ struct FileInfo
     bool         Valid;
     bool         Modified;
     MetaDataList MetaData;
+    QString      CurrentRegistry;
     mp4_Handler* H;
 
     FileInfo()

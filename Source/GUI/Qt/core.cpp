@@ -30,6 +30,7 @@ void Core::Dummy_Handler(const QString &FileName)
 
     Current.Modified = false;
 
+    Current.CurrentRegistry = "ad-id.org";
     MetaData.insert("ad-id.org", "");
 
     QString BaseName = QFileInfo(FileName).baseName();
@@ -89,8 +90,8 @@ bool Core::Save_File(const QString& FileName)
         FileInfo &F=Files[FileName];
         
         Ztring Registry, Value;
-        Registry.From_UTF8(F.MetaData.firstKey().toUtf8().constData());
-        Value.From_UTF8(F.MetaData.first().toUtf8().constData());
+        Registry.From_UTF8(F.CurrentRegistry.toUtf8().constData());
+        Value.From_UTF8(F.MetaData.value(F.CurrentRegistry).toUtf8().constData());
         F.H->Set("com.universaladid.idregistry", Registry.To_Local(), mp4_Handler::rules());
         F.H->Set("com.universaladid.idvalue", Value.To_Local(), mp4_Handler::rules());
 
