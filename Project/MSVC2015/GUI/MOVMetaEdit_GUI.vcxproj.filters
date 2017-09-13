@@ -209,12 +209,6 @@
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst.cpp">
       <Filter>Source Files\Common\mp4</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst_xxxx.cpp">
-      <Filter>Source Files\Common\mp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst_xxxx_data.cpp">
-      <Filter>Source Files\Common\mp4</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_keys.cpp">
       <Filter>Source Files\Common\mp4</Filter>
     </ClCompile>

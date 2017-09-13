@@ -12,6 +12,18 @@
 #include "tablewidget.h"
 
 //***************************************************************************
+// Info
+//***************************************************************************
+
+static const int ColumnSize[4] =
+{
+    55,
+     5,
+    20,
+    20,
+};
+
+//***************************************************************************
 // Helpers
 //***************************************************************************
 
@@ -217,9 +229,10 @@ void TableWidget::Setup(Core *C)
     QStringList Header_Labels;
 
     Header_Labels.append("File Name");
+    Header_Labels.append("OK");
     Header_Labels.append("Registry");
     Header_Labels.append("Value");
-    setColumnCount(3);
+    setColumnCount(4);
     setHorizontalHeaderLabels(Header_Labels);
 #if QT_VERSION < 0x050000
     horizontalHeader()->setResizeMode(QHeaderView::Interactive);
@@ -227,16 +240,11 @@ void TableWidget::Setup(Core *C)
     horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 #endif
 
-    //TODO: load and save user preference
-    setColumnWidth(0, width() * 60 / 100);
-    setColumnWidth(1, width() * 20 / 100);
-    setColumnWidth(2, width() * 20 / 100);
-
     ItemDelegate* ItemEditor = new ItemDelegate(NULL, C);
     connect(ItemEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
 
-    setItemDelegateForColumn(1, qobject_cast<QAbstractItemDelegate*>(new ComboBoxDelegate(NULL, C)));
-    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
+    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(new ComboBoxDelegate(NULL, C)));
+    setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
 }
 
 //---------------------------------------------------------------------------
@@ -250,6 +258,21 @@ void TableWidget::Set_Modified(int Row, bool Modified)
         QFont Font = this->item(Row, Col)->font();
         Font.setBold(Modified);
         this->item(Row, Col)->setFont(Font);
+    }
+}
+
+//---------------------------------------------------------------------------
+void TableWidget::Set_Valid(int Row, bool Valid)
+{
+    if (Valid || Row > this->rowCount())
+        return;
+
+    for (int Col = 0; Col < this->columnCount(); Col++)
+    {
+        Qt::ItemFlags Flags = this->item(Row, Col)->flags();
+        Flags.setFlag(Qt::ItemIsEnabled, false);
+        Flags.setFlag(Qt::ItemIsSelectable, false);
+        this->item(Row, Col)->setFlags(Flags);
     }
 }
 
@@ -287,11 +310,15 @@ void TableWidget::Update_Table()
 
             insertRow(rowCount());
             setItem(rowCount() - 1, 0, Item);
+            setItem(rowCount() - 1, 1, new QTableWidgetItem(It->Valid?"Yes":It->H->PerFile_Error.str().c_str()));
 
-            setItem(rowCount() - 1, 1, new QTableWidgetItem("ad-id.org"));
-            setItem(rowCount() - 1, 2, new QTableWidgetItem(It->MetaData["ad-id.org"]));
+            setItem(rowCount() - 1, 2, new QTableWidgetItem(It->Valid?"ad-id.org":""));
+            setItem(rowCount() - 1, 3, new QTableWidgetItem(It->Valid ? It->MetaData["ad-id.org"]:""));
 
-            Set_Modified(rowCount() - 1, It->Modified);
+            if (It->Valid)
+                Set_Modified(rowCount() - 1, It->Modified);
+            else
+                Set_Valid(rowCount() - 1, false);
         }
     }
 }
@@ -303,15 +330,10 @@ void TableWidget::resizeEvent(QResizeEvent* Event)
     if(!horizontalScrollBar()->isVisible())
     {
         qreal Total_New = Event->size().width();
-        //Get the current space occupied by each column
-        qreal Total_Old = columnWidth(0) + columnWidth(1) + columnWidth(2);
-        qreal Col0_Percent = columnWidth(0) * 100 / Total_Old;
-        qreal Col1_Percent = columnWidth(1) * 100 / Total_Old;
-        qreal Col2_Percent = columnWidth(1) * 100 / Total_Old;
-
-        setColumnWidth(0, Total_New * Col0_Percent / 100);
-        setColumnWidth(1, Total_New * Col1_Percent / 100);
-        setColumnWidth(2, Total_New * Col2_Percent / 100);
+        setColumnWidth(0, Total_New * ColumnSize[0] / 100);
+        setColumnWidth(1, Total_New * ColumnSize[1] / 100);
+        setColumnWidth(2, Total_New * ColumnSize[2] / 100);
+        setColumnWidth(3, Total_New * ColumnSize[3] / 100);
     }
     //Call base resizeEvent to handle the vertical resizing
     QTableView::resizeEvent(Event);

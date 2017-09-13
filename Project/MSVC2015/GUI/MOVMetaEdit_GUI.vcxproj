@@ -63,8 +63,6 @@
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta.cpp" />
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_hdlr.cpp" />
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst.cpp" />
-    <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst_xxxx.cpp" />
-    <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_ilst_xxxx_data.cpp" />
     <ClCompile Include="..\..\..\Source\Common\mp4\mp4_moov_meta_keys.cpp" />
     <ClCompile Include="..\..\..\Source\Common\mp4_Base.cpp" />
     <ClCompile Include="..\..\..\Source\Common\mp4_Base_parsing.cpp" />

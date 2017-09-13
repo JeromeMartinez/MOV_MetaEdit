@@ -108,6 +108,7 @@ public:
     TableWidget(QWidget* Parent);
 
     void Setup(Core* C);
+    void Set_Valid(int Row, bool Valid = true);
     void Set_Modified(int Row, bool Modified = true);
     void Update_Table();
 

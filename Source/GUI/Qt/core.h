@@ -7,6 +7,7 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include "Common/mp4_Handler.h"
 #include <QMap>
 #include <QString>
 
@@ -14,8 +15,16 @@ typedef QMap<QString, QString> MetaDataList;
 
 struct FileInfo
 {
+    bool         Valid;
     bool         Modified;
     MetaDataList MetaData;
+    mp4_Handler* H;
+
+    FileInfo()
+        : Valid(false)
+        , Modified(false)
+        , H(NULL)
+    {}
 };
 
 typedef QMap<QString, FileInfo> FileList;

@@ -13,7 +13,6 @@
 
 #include "tablewidget.h"
 #include "core.h"
-#include "Common/mp4_Handler.h"
 #include "ZenLib/Ztring.h"
 using namespace ZenLib;
 
@@ -42,6 +41,12 @@ void Core::Dummy_Handler(const QString &FileName)
     }
 
     Current.MetaData = MetaData;
+
+    Current.H = new mp4_Handler();
+    Current.H->Open(FileName.toLocal8Bit().constData());
+    if (Current.H->PerFile_Error.str().empty())
+        Current.Valid = true;
+
     Files.insert(FileName, Current);
 }
 
@@ -81,34 +86,16 @@ bool Core::Save_File(const QString& FileName)
 {
     if (Files.contains(FileName))
     {
-        mp4_Handler H;
-        if (!H.Open(Ztring().From_UTF8(FileName.toUtf8().constData()).To_Local()))
-        {
-            int A = 0;
-        }
-        if (H.Canceled_Get())
-        {
-            int A = 0;
-        }
-        if (H.IsModified_Get())
-        {
-            int A = 0;
-        }
-
-        if (!H.Errors.str().empty())
-        {
-            //cout << H.Errors.str();
-            return 1;
-        }
-
+        FileInfo &F=Files[FileName];
+        
         Ztring Registry, Value;
-        Registry.From_UTF8(Files[FileName].MetaData.firstKey().toUtf8().constData());
-        Value.From_UTF8(Files[FileName].MetaData.first().toUtf8().constData());
-        H.Set("com.universaladid.idregistry", Registry.To_Local(), mp4_Handler::rules());
-        H.Set("com.universaladid.idvalue", Value.To_Local(), mp4_Handler::rules());
+        Registry.From_UTF8(F.MetaData.firstKey().toUtf8().constData());
+        Value.From_UTF8(F.MetaData.first().toUtf8().constData());
+        F.H->Set("com.universaladid.idregistry", Registry.To_Local(), mp4_Handler::rules());
+        F.H->Set("com.universaladid.idvalue", Value.To_Local(), mp4_Handler::rules());
 
-        H.Save();
+        F.H->Save();
     }
 
-    return NULL;
+    return true;
 }
