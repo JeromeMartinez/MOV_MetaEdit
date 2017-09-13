@@ -39,6 +39,7 @@ TEMPLATE = app
 DEFINES += QT_DEPRECATED_WARNINGS
 
 INCLUDEPATH      += ../../Source/GUI/Qt
+INCLUDEPATH      += ../../Source
 
 SOURCES += \
         ../../Source/GUI/Qt/main.cpp \
@@ -47,12 +48,17 @@ SOURCES += \
         ../../Source/GUI/Qt/tablewidget.cpp \
         ../../Source/GUI/Qt/aboutdialog.cpp \
         ../../Source/GUI/Qt/helpdialog.cpp\
-		../../Source/MD5/md5.h \
-		../../Source/Riff/Riff_Base.h \
-		../../Source/Riff/Riff_Chunks.h \
-		../../Source/Riff/Riff_Handler.h \
-		../../Source/TinyXml/tinystr.h \
-		../../Source/TinyXml/tinyxml.h \
+        ../../Source/Common/AdID.cpp \
+        ../../Source/Common/mp4/mp4_.cpp \
+        ../../Source/Common/mp4/mp4_mdat.cpp \
+        ../../Source/Common/mp4/mp4_moov.cpp \
+        ../../Source/Common/mp4/mp4_moov_meta.cpp \
+        ../../Source/Common/mp4/mp4_moov_meta_hdlr.cpp \
+        ../../Source/Common/mp4/mp4_moov_meta_ilst.cpp \
+        ../../Source/Common/mp4/mp4_moov_meta_keys.cpp \
+        ../../Source/Common/mp4_Base.cpp \
+        ../../Source/Common/mp4_Base_parsing.cpp \
+        ../../Source/Common/mp4_Handler.cpp \
 		../../Source/ZenLib/Conf.cpp \
 		../../Source/ZenLib/CriticalSection.cpp \
 		../../Source/ZenLib/Dir.cpp \
@@ -79,6 +85,10 @@ HEADERS += \
         ../../Source/GUI/Qt/aboutdialog.h \
         ../../Source/GUI/Qt/helpdialog.h \
         ../../Source/GUI/Qt/config.h \
+        ../../Source/Common/AdID.h \
+        ../../Source/Common/mp4_Base.h \
+        ../../Source/Common/mp4_Handler.h \
+        ../../Source/Common/mp4/mp4_.h \
 		../../Source/ZenLib/BitStream.h \
 		../../Source/ZenLib/BitStream_Fast.h \
 		../../Source/ZenLib/BitStream_LE.h \
