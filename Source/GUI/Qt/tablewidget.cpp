@@ -140,6 +140,7 @@ void ComboBoxDelegate::setModelData(QWidget* Editor,
 
     Model->setData(Index, Registry);
     Model->setData(Index.sibling(Index.row(), VALUE_COLUMN), Value);
+    (*C->Get_Files())[FileName].CurrentRegistry = Registry;
 }
 
 //---------------------------------------------------------------------------
