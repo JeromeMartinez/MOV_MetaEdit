@@ -15,6 +15,7 @@ TARGET = "movmetaedit-gui"
 }
 
 win32 {
+    LIBS += luser32
     RC_FILE = movmetaedit-gui.rc
     contains(QT_ARCH, i386) {
         DESTDIR = Win32
