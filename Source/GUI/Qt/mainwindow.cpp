@@ -145,6 +145,20 @@ void MainWindow::on_Menu_File_Open_Directory_triggered()
 }
 
 //---------------------------------------------------------------------------
+void MainWindow::on_Menu_File_Save_All_triggered()
+{
+    FileList* Files = C->Get_Files();
+
+    for(FileList::iterator It = Files->begin(); It != Files->end(); It++)
+    {
+        if(It->Modified)
+        {
+            C->Save_File(It.key());
+        }
+    }
+}
+
+//---------------------------------------------------------------------------
 void MainWindow::on_Menu_Help_Help_triggered()
 {
     // Showing Help Dialog

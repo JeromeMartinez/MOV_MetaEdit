@@ -38,6 +38,7 @@ private:
 private slots:
     void on_Menu_File_Open_Files_triggered();
     void on_Menu_File_Open_Directory_triggered();
+    void on_Menu_File_Save_All_triggered();
     void on_Menu_Help_Help_triggered();
     void on_Menu_Help_About_triggered();
     void on_Menu_File_Close_triggered();

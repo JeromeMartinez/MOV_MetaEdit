@@ -14,6 +14,7 @@
 #include "ZenLib/File.h"
 #include "CLI/Help.h"
 #include "Common/AdID.h"
+#include "Common/mp4_Handler.h"
 using namespace std;
 using namespace ZenLib;
 
@@ -102,9 +103,23 @@ int main(int argc, char* argv[])
     std::vector<Structure*> Structures;
     for (ZtringList::iterator Item = List.begin(); Item != List.end(); Item++)
     {
+        cout << "Parsing " << Item->To_Local() << std::endl;
+        if (AdID_Requested)
+        {
+            mp4_Handler* H=new mp4_Handler;
+            if (!H->Open((*Item).To_Local()))
+            {
+                cout << " Can not open file: " << H->Errors.str() << endl;
+                delete H;
+                continue;
+            }
+
+            Structures.push_back((Structure*)H); //Hack for storing mp4_Handler
+
+            continue;
+        }
+
         File F;
-        if (!AdID_Requested)
-            cout << "Parsing " << Item->To_Local() << std::endl;
         if (F.Open(*Item, File::Access_Read))
         {
 
@@ -199,10 +214,32 @@ int main(int argc, char* argv[])
 
             cout << AdID_Content_Temp.GetRegistry() << '|';
 
-            cout << (AdID_Content_Temp.ErrorMessage.empty()? AdID_Content_Temp.Get():AdID_Content_Temp.ErrorMessage) << endl;
+            if (!AdID_Content_Temp.ErrorMessage.empty())
+            {
+                cout << AdID_Content_Temp.ErrorMessage << endl;
+
+                ItemName++;
+                continue;
+            }
+
+            mp4_Handler* H = (mp4_Handler*)(*Item); //Hack for storing mp4_Handler
+
+            H->Set("com.universaladid.idregistry", AdID_Content_Temp.GetRegistry().c_str(), mp4_Handler::rules());
+            H->Set("com.universaladid.idvalue", AdID_Content_Temp.Get().c_str(), mp4_Handler::rules());
+
+            H->Save();
+
+            if (!H->Errors.str().empty())
+            {
+                cout << H->Errors.str() << endl;
+
+                ItemName++;
+                continue;
+            }
+
+            cout << AdID_Content_Temp.Get() << endl;
 
             ItemName++;
-
             continue;
         }
 

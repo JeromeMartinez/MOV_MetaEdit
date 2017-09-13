@@ -12,13 +12,13 @@
 
 typedef QMap<QString, QString> MetaDataList;
 
-struct File
+struct FileInfo
 {
     bool         Modified;
     MetaDataList MetaData;
 };
 
-typedef QMap<QString, File> FileList;
+typedef QMap<QString, FileInfo> FileList;
 
 class Core
 {
@@ -35,6 +35,8 @@ public:
     size_t Files_Count() { return Files.size(); }
 
     FileList* Get_Files() { return &Files; }
+
+    bool Save_File(const QString& FileName);
 
 private:
     FileList Files;
