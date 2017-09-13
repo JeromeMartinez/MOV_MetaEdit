@@ -153,9 +153,12 @@ void MainWindow::on_Menu_File_Save_All_triggered()
     {
         if(It->Modified)
         {
+            It->Modified = false;
             C->Save_File(It.key());
         }
     }
+
+    Ui->Table_Widget->Update_Table();
 }
 
 //---------------------------------------------------------------------------

@@ -270,8 +270,10 @@ void TableWidget::Set_Valid(int Row, bool Valid)
     for (int Col = 0; Col < this->columnCount(); Col++)
     {
         Qt::ItemFlags Flags = this->item(Row, Col)->flags();
-        Flags.setFlag(Qt::ItemIsEnabled, false);
-        Flags.setFlag(Qt::ItemIsSelectable, false);
+        if(Flags.testFlag(Qt::ItemIsEnabled))
+            Flags &= ~Qt::ItemIsEnabled;
+        if(Flags.testFlag(Qt::ItemIsSelectable))
+            Flags &= ~Qt::ItemIsSelectable;
         this->item(Row, Col)->setFlags(Flags);
     }
 }
