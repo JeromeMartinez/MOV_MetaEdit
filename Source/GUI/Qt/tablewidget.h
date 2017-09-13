@@ -23,8 +23,9 @@
 enum COLUMNS
 {
     FILE_COLUMN = 0,
-    REGISTRY_COLUMN = 1,
-    VALUE_COLUMN = 2
+    OK_COLUMN = 1,
+    REGISTRY_COLUMN = 2,
+    VALUE_COLUMN = 3
 };
 
 //---------------------------------------------------------------------------
