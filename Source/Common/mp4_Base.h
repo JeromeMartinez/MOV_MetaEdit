@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #ifndef mp4_BaseH
@@ -107,58 +104,24 @@ public:
     //Global structure for handling common data
     struct global
     {
-        struct chunk_WAVE
-        {
-            int64u          File_Offset;
-            int64u          Size_Original;
-
-            chunk_WAVE()
-            {
-                File_Offset=(int64u)-1;
-                Size_Original=(int64u)-1;
-            }
-        };
-        struct chunk_data
+        struct chunk_mdat
         {
             int64u          File_Offset;
             int64u          Size;
 
-            chunk_data()
+            chunk_mdat()
             {
                 File_Offset=(int64u)-1;
                 Size=(int64u)-1;
             }
         };
-        struct chunk_ds64
+        struct chunk_moov
         {
-            int64u          riffSize;
-            int64u          dataSize;
-            int64u          sampleCount;
+            int64u          File_Offset;
 
-            chunk_ds64()
+            chunk_moov()
             {
-                riffSize=(int64u)-1;
-                dataSize=(int64u)-1;
-                sampleCount=(int64u)-1;
-            }
-        };
-        struct chunk_fmt_
-        {
-            int16u          formatType;
-            int16u          channelCount;
-            int32u          sampleRate;
-            int32u          bytesPerSecond;
-            int16u          blockAlignment;
-            int16u          bitsPerSample;
- 
-            chunk_fmt_()
-            {
-                formatType=0;
-                channelCount=0;
-                sampleRate=0;
-                bytesPerSecond=0;
-                blockAlignment=0;
-                bitsPerSample=0;
+                File_Offset=(int64u)-1;
             }
         };
         struct chunk_strings
@@ -190,33 +153,16 @@ public:
         int64u              File_Size;
         Ztring              File_Date;
         stringstream        Trace;
-        chunk_WAVE         *WAVE;
-        chunk_ds64         *ds64;
-        chunk_fmt_         *fmt_;
-        chunk_data         *mdat;
-        chunk_strings      *bext;
-        chunk_strings      *INFO;
-        chunk_strings      * XMP;
-        chunk_strings      *aXML;
-        chunk_strings      *iXML;
-        chunk_strings      *MD5Stored;
-        chunk_strings      *MD5Generated;
-        int32u              moov_meta_ilst_xxxxCurrent; //Temporary value
+        chunk_mdat         *mdat;
+        vector<chunk_moov*> moov;
         vector<string>      moov_meta_keys_NewKeys;
         size_t              moov_meta_keys_AlreadyPresent;
         vector<string>      moov_meta_ilst_NewValues;
         size_t              moov_meta_ilst_AlreadyPresent;
         map<int32u, string> moov_meta_values;
-        bool                NoPadding_Accept;
-        bool                NoPadding_IsCorrected;
         bool                NewChunksAtTheEnd;
-        bool                GenerateMD5;
-        bool                VerifyMD5;
-        bool                EmbedMD5;
-        bool                EmbedMD5_AuthorizeOverWritting;
         bool                Out_Buffer_File_TryModification;
         bool                Out_Buffer_File_IsModified;
-        bool                IsRF64;
 
         CriticalSection     CS;
         float               Progress;
@@ -225,43 +171,20 @@ public:
         global()
         {
             File_Size=0;
-            WAVE=NULL;
-            ds64=NULL;
-            fmt_=NULL;
             mdat=NULL;
-            bext=NULL;
-            INFO=NULL;
-             XMP=NULL;
-            aXML=NULL;
-            iXML=NULL;
-            MD5Stored=NULL;
-            MD5Generated=NULL;
             moov_meta_keys_AlreadyPresent=0;
             moov_meta_ilst_AlreadyPresent=0;
-            NoPadding_Accept=false;
-            NoPadding_IsCorrected=false;
             NewChunksAtTheEnd=false;
-            GenerateMD5=false;
-            VerifyMD5=false;
-            EmbedMD5=false;
-            EmbedMD5_AuthorizeOverWritting=false;
             Out_Buffer_WriteAtEnd=false;
             Out_Buffer_File_TryModification=true;
             Out_Buffer_File_IsModified=false;
-            IsRF64=false;
             Progress=0;
             Canceling=false;
         }
 
         ~global()
         {
-            delete ds64; //ds64=NULL;
-            delete fmt_; //fmt_=NULL;
-            delete bext; //bext=NULL;
-            delete INFO; //INFO=NULL;
-            delete  XMP; // XMP=NULL;
-            delete aXML; //aXML=NULL;
-            delete iXML; //iXML=NULL;
+            delete mdat;
         }
     };
 

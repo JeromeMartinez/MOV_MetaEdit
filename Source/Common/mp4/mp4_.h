@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #ifndef mp4_ChunksH
@@ -47,8 +44,6 @@ namespace Elements
     const uint32_t moov_meta_hdlr = 0x68646C72;
     const uint32_t moov_meta_keys = 0x6B657973;
     const uint32_t moov_meta_ilst = 0x696C7374;
-    const uint32_t moov_meta_ilst_xxxx = 0x00000000; // Fake
-    const uint32_t moov_meta_ilst_xxxx_data = 0x64617461;
 }
 
 //***************************************************************************
@@ -93,8 +88,6 @@ CHUNK_I(1, moov);
 CHUNK_I(2, moov_meta);
 CHUNK_W(3, moov_meta_hdlr);
 CHUNK_W(3, moov_meta_ilst);
-CHUNK_I(4, moov_meta_ilst_xxxx);
-CHUNK_W(5, moov_meta_ilst_xxxx_data);
 CHUNK_W(3, moov_meta_keys);
 
 #endif

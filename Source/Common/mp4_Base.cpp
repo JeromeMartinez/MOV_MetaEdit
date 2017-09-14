@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4_Handler.h"
@@ -118,36 +115,66 @@ void mp4_Base::Read (chunk &Chunk_In)
     //Positioning
     Global->In.GoTo(Chunk.File_In_Position+Chunk.Header.Size+Chunk.Content.Size);
 
-    //We want at least a WAVE chunk at the begining
-    //if (Global->In.Position_Get()>=Global->In.Size_Get() && Global->WAVE==NULL)
-    //    throw exception_valid("no WAV header");
+    if (Global->In.Position_Get()>=Global->In.Size_Get())
+    {
+        //We want at least 1 mdat atom
+        if (!Global->mdat)
+            throw exception_valid("no mdat atom");
+        //We want at least 1 moov atom
+        if (Global->moov.empty())
+            throw exception_valid("no moov atom");
+        //We want at least 1 moov atom
+        if (Global->moov.size()>1)
+            throw exception_valid("too many moov atoms");
+        //moov must be after mdat
+        if (Global->moov[0]->File_Offset < Global->mdat->File_Offset)
+            throw exception_valid("faststart not yet supported");
+    }
 }
 
 //---------------------------------------------------------------------------
 bool mp4_Base::Read_Header (chunk &NewChunk)
 {
-    int8u Temp[4];
+    int8u Temp[8];
 
     //Atom size
-    if (Global->In.Position_Get()+4>Chunk.File_In_Position+Chunk.Header.Size+Chunk.Content.Size)
+    if (Global->In.Position_Get() + 4>Chunk.File_In_Position + Chunk.Header.Size + Chunk.Content.Size)
         throw exception_valid("small");
     if (Global->In.Read(Temp, 4)<4)
         throw exception_read();
-    NewChunk.Content.Size=BigEndian2int32u(Temp);
-    if (Global->In.Position_Get()-4+NewChunk.Content.Size>Chunk.File_In_Position+Chunk.Header.Size+Chunk.Content.Size)
+    NewChunk.Content.Size = BigEndian2int32u(Temp);
+    if (NewChunk.Content.Size<8 && NewChunk.Content.Size != 1)
+    {
+        throw exception_valid("invalid atom size");
+    }
+    if (Global->In.Position_Get() - 4 + NewChunk.Content.Size>Chunk.File_In_Position + Chunk.Header.Size + Chunk.Content.Size)
         throw exception_valid("truncated");
-   
+
     //Atom name
-    if (Global->In.Position_Get()>Chunk.File_In_Position+Chunk.Header.Size+Chunk.Content.Size)
+    if (Global->In.Position_Get()>Chunk.File_In_Position + Chunk.Header.Size + Chunk.Content.Size)
         throw exception_valid("small");
     if (Global->In.Read(Temp, 4)<4)
         throw exception_read();
-    NewChunk.Header.Name=CC4(Temp);
+    NewChunk.Header.Name = CC4(Temp);
 
-    NewChunk.Header.List=0x00000000;
-    NewChunk.Header.Size=8;
+    NewChunk.Header.List = 0x00000000;
+    NewChunk.Header.Size = 8;
 
-    NewChunk.Content.Size-=NewChunk.Header.Size;
+    if (NewChunk.Content.Size == 1)
+    {
+        //64-bit size
+        if (Global->In.Position_Get() + 8>Chunk.File_In_Position + Chunk.Header.Size + Chunk.Content.Size)
+            throw exception_valid("small");
+        if (Global->In.Read(Temp, 8)<8)
+            throw exception_read();
+        NewChunk.Content.Size = BigEndian2int64u(Temp);
+        NewChunk.Header.Size = 16;
+
+        //TEMP
+        throw exception_read_chunk("big files currently not supported");
+    }
+
+    NewChunk.Content.Size -= NewChunk.Header.Size;
 
     return true;
 }
@@ -256,54 +283,15 @@ void mp4_Base::Write ()
     {
         //Calculating block size
         int64u Block_Size=Block_Size_Get();
-        /*if (Block_Size>mp4_Size_Limit)
+        if (Block_Size>0xFFFFFFFF)
         {
-            //We need RF64
-            if (Chunk.Header.Level==1)
-            {
-                if (Global->ds64==NULL)
-                {
-                    Chunk.Header.List=Elements::RF64;
-                    Global->ds64=new mp4_Base::global::chunk_ds64;
-                    Subs.insert(Subs.begin(), new mp4_WAVE_ds64(Global)); //First place, always
-                    Subs[0]->Modify();
-                    Block_Size=Block_Size_Get();
-                }
-                if (Chunk.Header.List==Elements::RF64)
-                {
-                    Global->ds64->riffSize=Block_Size-8;
-                    if (Global->data)
-                        Global->ds64->dataSize=Global->data->Size;
-                }
-                Subs[0]->Modify();
-            }
-            //Setting default value
-            Block_Size=8+0xFFFFFFFFLL; //Putting the maximum size in this chunk size
-        }*/
+            throw exception_write("big");
+        }
 
-        //Filling
-        if (Chunk.Header.List!=0x00000000)
-        {
-            int8u Header[12];
-            int32u2BigEndian(Header, Chunk.Header.List);
-            int32u2LittleEndian(Header+4, (int32u)(Block_Size-8));
-            int32u2BigEndian(Header+8, Chunk.Header.Name);
-            Write_Internal(Header, 12);
-        }
-        else
-        {
-            int8u Header[8];
-            /*int32u2BigEndian(Header, Chunk.Header.Name);
-            if (Chunk.Content.Size<=mp4_Size_Limit)
-                int32u2LittleEndian(Header+4, (int32u)(Chunk.Content.Size));
-            else if (Chunk.Header.Level==2 && Chunk.Header.Name==Elements::mdat)
-                int32u2LittleEndian(Header+4, 0xFFFFFFFF);
-            else
-                throw exception_write("Block size is too big");*/
-            int32u2BigEndian(Header, Block_Size);
-            int32u2BigEndian(Header+4, Chunk.Header.Name);
-            Write_Internal(Header, 8);
-        }
+        int8u Header[8];
+        int32u2BigEndian(Header, (int32u)Block_Size);
+        int32u2BigEndian(Header+4, Chunk.Header.Name);
+        Write_Internal(Header, 8);
     }
     else if (!IsModified())
         return; //Nothing to do if the file is not modifed (Level 0)
@@ -324,7 +312,7 @@ void mp4_Base::Write ()
                 File_Begin_Offset_Theory+=Subs[0]->Subs[Pos]->Block_Size_Get();
             }
             if (Pos==Subs[0]->Subs.size())
-                throw exception_write("Should never happen, please contact the developper (data chunk not found)");
+                throw exception_write("Should never happen, please contact the developper (mdat chunk not found)");
 
             if (File_Begin_Offset_Theory+8>Global->mdat->File_Offset-8 && File_Begin_Offset_Theory!=Global->mdat->File_Offset-8) //if data chunk must be moved
             {
@@ -364,31 +352,11 @@ void mp4_Base::Write ()
         else
         {
             Write_Internal();
-            
-            //Padding
-            /*
-            if (Chunk.Content.Size%2)
-            {
-                int8u Temp[1];
-                Temp[0]=0x00;
-                Write_Internal(Temp, 1);
-            }
-            */
         }
     }
     else
     {
         Write_Internal();
-        
-        //Padding
-        /*
-        if (Chunk.Content.Size%2)
-        {
-            int8u Temp[1];
-            Temp[0]=0x00;
-            Write_Internal(Temp, 1);
-        }
-        */
     }
 
     if (Chunk.Header.Level==0 && Global->Out_Buffer_File_TryModification)
@@ -636,7 +604,7 @@ int64u mp4_Base::Block_Size_Get ()
         if (Pos+1==Subs.size() && Subs[Pos]->Chunk.Header.Name!=Elements::free)
         {
             //Padding if we can
-            if (Size+Subs[Pos]->Block_Size_Get()<Global->WAVE->Size_Original)
+            //if (Size+Subs[Pos]->Block_Size_Get()<Global->WAVE->Size_Original)
             {
                 /*
                 Subs.insert(Subs.end(), new mp4_free(Global));

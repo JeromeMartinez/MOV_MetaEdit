@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4/mp4_.h"
@@ -18,10 +15,6 @@
 //---------------------------------------------------------------------------
 void mp4_moov_meta::Read_Internal ()
 {
-    //Filling
-    Global->WAVE=new mp4_Base::global::chunk_WAVE;
-    Global->WAVE->Size_Original=Chunk.Content.Size;
-
     SUBS_BEGIN();
         SUB_ELEMENT(moov_meta_hdlr);
         SUB_ELEMENT(moov_meta_keys);

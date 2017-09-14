@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4/mp4_.h"
@@ -25,11 +22,11 @@ void mp4_moov_meta_hdlr::Read_Internal ()
     int8u Version;
     Get_B1( Version);
     if (Version)
-        throw exception_valid("moov meta version unsupported");
+        throw exception_read_chunk("moov meta version unsupported");
     Skip_XX(3+4); //Flags+Predefined
     Get_B4( Handler_type);
     if (Handler_type!=0x6D647461) //mdta
-        throw exception_valid("moov meta Handler type unsupported");
+        throw exception_read_chunk("moov meta Handler type unsupported");
 }
 
 //***************************************************************************

@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4/mp4_.h"
@@ -19,19 +16,10 @@
 void mp4_mdat::Read_Internal ()
 {
     //Filling
-    Global->mdat=new mp4_Base::global::chunk_data;
-    Global->mdat->File_Offset=Global->In.Position_Get();
-    Global->mdat->Size=Chunk.Content.Size;
-
-    //MD5
-    try
-    {
-        Chunk.Content.Buffer=new int8u[65536];
-    }
-    catch(...)
-    {
-        throw exception_read_chunk("Problem during memory allocation");
-    }
+    mp4_Base::global::chunk_mdat* mdat=new mp4_Base::global::chunk_mdat;
+    mdat->File_Offset=Global->In.Position_Get();
+    mdat->Size=Chunk.Content.Size;
+    Global->mdat=mdat;
 }
 
 //***************************************************************************

@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4/mp4_.h"
@@ -26,7 +23,7 @@ void mp4_moov_meta_ilst::Read_Internal ()
 
     //Integrity
     if (Global->moov_meta_ilst_AlreadyPresent)
-        throw exception_valid("2 moov meta ilst chunks");
+        throw exception_read_chunk("2 moov meta ilst chunks");
     Global->moov_meta_ilst_AlreadyPresent++; //Global, we don't read ilst
 
     //Reading
@@ -100,9 +97,9 @@ void mp4_moov_meta_ilst::Modify_Internal()
 
     for (size_t i=0; i<Global->moov_meta_ilst_NewValues.size(); i++)
     {
-        Put_B4(8+8+8+Global->moov_meta_ilst_NewValues[i].size());
-        Put_B4(1+Global->moov_meta_keys_AlreadyPresent-Global->moov_meta_ilst_NewValues.size()+i); //1-ordered key position
-        Put_B4(8+8+Global->moov_meta_ilst_NewValues[i].size());
+        Put_B4((int32u)(8+8+8+Global->moov_meta_ilst_NewValues[i].size()));
+        Put_B4((int32u)(1+Global->moov_meta_keys_AlreadyPresent-Global->moov_meta_ilst_NewValues.size()+i)); //1-ordered key position
+        Put_B4((int32u)(8+8+Global->moov_meta_ilst_NewValues[i].size()));
         Put_B4(0x64617461); //data
         Put_B4(0x00000001); //UTF-8
         Put_B4(0x00000000); //No locale

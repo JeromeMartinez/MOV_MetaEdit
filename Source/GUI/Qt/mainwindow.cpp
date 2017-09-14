@@ -153,6 +153,7 @@ void MainWindow::on_Menu_File_Save_All_triggered()
     {
         if(It->Modified)
         {
+            It->Valid = false; //Done for not writing again the same file
             It->Modified = false;
             C->Save_File(It.key());
         }

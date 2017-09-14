@@ -1,11 +1,8 @@
-// BWF MetaEdit Riff - RIFF stuff for BWF MetaEdit
-//
-// This code was created in 2010 for the Library of Congress and the
-// other federal government agencies participating in the Federal Agencies
-// Digitization Guidelines Initiative and it is in the public domain.
-//
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*  Copyright (c) MediaArea.net SARL. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a MIT-style license that can
+ *  be found in the License.html file in the root of the source tree.
+ */
 
 //---------------------------------------------------------------------------
 #include "Common/mp4_Handler.h"
@@ -277,19 +274,6 @@ bool mp4_Handler::Save()
 
     //Log
     Information<<(Chunks?Chunks->Global->File_Name.To_Local() :"")<<": Is modified"<<endl;
-
-    //Loading the new file (we are verifying the integraty of the generated file)
-    string FileName=Chunks->Global->File_Name.To_Local();
-    bool GenerateMD5_Temp=Chunks->Global->GenerateMD5;
-    Chunks->Global->GenerateMD5=false;
-    if (!Open(FileName) && Chunks==NULL) //There may be an error but file is open (eg MD5 error)
-    {
-        Errors<<FileName<<": WARNING, the resulting file can not be validated, file may be CORRUPTED"<<endl;
-        PerFile_Error<<"WARNING, the resulting file can not be validated, file may be CORRUPTED"<<endl;
-        Chunks->Global->GenerateMD5=GenerateMD5_Temp;
-        return false;
-    }
-    Chunks->Global->GenerateMD5=GenerateMD5_Temp;
 
     CriticalSectionLocker(Chunks->Global->CS);
     Chunks->Global->Progress=1;
@@ -571,12 +555,7 @@ void mp4_Handler::Options_Update()
     if (Chunks==NULL || Chunks->Global==NULL)
         return;
 
-    Chunks->Global->NoPadding_Accept=NoPadding_Accept;
     Chunks->Global->NewChunksAtTheEnd=NewChunksAtTheEnd;
-    Chunks->Global->GenerateMD5=GenerateMD5;
-    Chunks->Global->VerifyMD5=VerifyMD5;
-    Chunks->Global->EmbedMD5=EmbedMD5;
-    Chunks->Global->EmbedMD5_AuthorizeOverWritting=EmbedMD5_AuthorizeOverWritting;
 }
 
 //***************************************************************************

@@ -300,6 +300,7 @@ void TableWidget::Update_Table()
 
         Entries.append(Entry);
         //Display modified entries in bold
+        Set_Valid(Row, Files->value(Entry).Valid);
         Set_Modified(Row, Files->value(Entry).Modified);
     }
 
