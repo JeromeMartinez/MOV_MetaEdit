@@ -16,7 +16,7 @@
 void mp4_moov::Read_Internal ()
 {
     //Filling
-    mp4_Base::global::chunk_moov* moov=new mp4_Base::global::chunk_moov;
+    mp4_Base::global::block_moov* moov=new mp4_Base::global::block_moov;
     moov->File_Offset=Global->In.Position_Get();
     Global->moov.push_back(moov);
 

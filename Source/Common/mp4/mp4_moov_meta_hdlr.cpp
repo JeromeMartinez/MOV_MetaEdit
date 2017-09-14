@@ -22,11 +22,11 @@ void mp4_moov_meta_hdlr::Read_Internal ()
     int8u Version;
     Get_B1( Version);
     if (Version)
-        throw exception_read_chunk("moov meta version unsupported");
+        throw exception_read_block("moov meta version unsupported");
     Skip_XX(3+4); //Flags+Predefined
     Get_B4( Handler_type);
     if (Handler_type!=0x6D647461) //mdta
-        throw exception_read_chunk("moov meta Handler type unsupported");
+        throw exception_read_block("moov meta Handler type unsupported");
 }
 
 //***************************************************************************

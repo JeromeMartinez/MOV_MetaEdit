@@ -59,11 +59,11 @@ protected:
     string text;    
 };
 
-class exception_read_chunk : public exception
+class exception_read_block : public exception
 {
 public:
-    exception_read_chunk(const string &text_in) throw () : exception() {text=text_in;}
-    ~exception_read_chunk() throw () {};
+    exception_read_block(const string &text_in) throw () : exception() {text=text_in;}
+    ~exception_read_block() throw () {};
     virtual const char* what() const throw()
     {
         return text.c_str();
@@ -104,27 +104,27 @@ public:
     //Global structure for handling common data
     struct global
     {
-        struct chunk_mdat
+        struct block_mdat
         {
             int64u          File_Offset;
             int64u          Size;
 
-            chunk_mdat()
+            block_mdat()
             {
                 File_Offset=(int64u)-1;
                 Size=(int64u)-1;
             }
         };
-        struct chunk_moov
+        struct block_moov
         {
             int64u          File_Offset;
 
-            chunk_moov()
+            block_moov()
             {
                 File_Offset=(int64u)-1;
             }
         };
-        struct chunk_strings
+        struct block_strings
         {
             map<string, string> Strings;
             map<string, vector<string>> Histories;
@@ -153,13 +153,12 @@ public:
         int64u              File_Size;
         Ztring              File_Date;
         stringstream        Trace;
-        chunk_mdat         *mdat;
-        vector<chunk_moov*> moov;
+        block_mdat         *mdat;
+        vector<block_moov*> moov;
         vector<string>      moov_meta_keys_NewKeys;
         size_t              moov_meta_keys_AlreadyPresent;
         vector<string>      moov_meta_ilst_NewValues;
         size_t              moov_meta_ilst_AlreadyPresent;
-        map<int32u, string> moov_meta_values;
         bool                NewChunksAtTheEnd;
         bool                Out_Buffer_File_TryModification;
         bool                Out_Buffer_File_IsModified;
@@ -190,7 +189,7 @@ public:
 
     //---------------------------------------------------------------------------
     //Chunk specific
-    struct chunk
+    struct block
     {
         struct header
         {
@@ -236,7 +235,7 @@ public:
         header  Header;
         content Content;
 
-        chunk()
+        block()
         {
             File_In_Position=(int64u)-1;
         }
@@ -253,7 +252,7 @@ public:
     
     //---------------------------------------------------------------------------
     //Read/Write
-    void Read                   (chunk &Chunk_In);
+    void Read                   (block &Chunk_In);
     void Modify                 (int32u Chunk_Name_1, int32u Chunk_Name_2, int32u Chunk_Name_3);
     void Modify                 ()                                              {Modify_Internal();};
     void Write                  ();
@@ -263,7 +262,7 @@ public:
     int64u Block_Size_Get       ();
     int64u Block_Size_Get       (int32u Element);
     size_t Subs_Pos_Get         (int32u Element);
-    bool   Read_Header          (chunk &NewChunk);
+    bool   Read_Header          (block &NewChunk);
     bool   IsModified           ()                                              {return Chunk.Content.IsModified;};
     void   IsModified_Clear     ()                                              {Chunk.Content.IsModified=false;};
     bool   IsRemovable          ()                                              {return Chunk.Content.IsRemovable;};
@@ -361,7 +360,7 @@ public: //protected :
 
     //---------------------------------------------------------------------------
     //Chunk
-    chunk Chunk;
+    block Chunk;
 
     //---------------------------------------------------------------------------
     //Friends
@@ -375,7 +374,7 @@ public: //protected :
 #define SUBS_BEGIN() \
     while (Global->In.Position_Get()<Chunk.File_In_Position+Chunk.Header.Size+Chunk.Content.Size) \
     { \
-        chunk NewChunk; \
+        block NewChunk; \
         NewChunk.Header.Level=Chunk.Header.Level+1; \
         if (!Read_Header(NewChunk)) \
             return; \

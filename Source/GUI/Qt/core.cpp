@@ -35,7 +35,7 @@ void Core::Dummy_Handler(const QString &FileName)
 
     QString BaseName = QFileInfo(FileName).baseName();
     int Pos = 0;
-    if(AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
+    if(Current.Valid && AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
     {
         MetaData["ad-id.org"] = BaseName;
         Current.Modified = true;
@@ -92,8 +92,8 @@ bool Core::Save_File(const QString& FileName)
         Ztring Registry, Value;
         Registry.From_UTF8(F.CurrentRegistry.toUtf8().constData());
         Value.From_UTF8(F.MetaData.value(F.CurrentRegistry).toUtf8().constData());
-        F.H->Set("com.universaladid.idregistry", Registry.To_Local(), mp4_Handler::rules());
-        F.H->Set("com.universaladid.idvalue", Value.To_Local(), mp4_Handler::rules());
+        F.H->Set("com.universaladid.idregistry", Registry.To_Local());
+        F.H->Set("com.universaladid.idvalue", Value.To_Local());
 
         F.H->Save();
     }

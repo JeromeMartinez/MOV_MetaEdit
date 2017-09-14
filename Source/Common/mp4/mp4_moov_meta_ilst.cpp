@@ -23,7 +23,7 @@ void mp4_moov_meta_ilst::Read_Internal ()
 
     //Integrity
     if (Global->moov_meta_ilst_AlreadyPresent)
-        throw exception_read_chunk("2 moov meta ilst chunks");
+        throw exception_read_block("2 moov meta ilst blocks");
     Global->moov_meta_ilst_AlreadyPresent++; //Global, we don't read ilst
 
     //Reading

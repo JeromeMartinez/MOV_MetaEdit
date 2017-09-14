@@ -30,30 +30,6 @@ class mp4_Handler
 {
 public:
     //---------------------------------------------------------------------------
-    //Structures
-    struct rules
-    {
-        bool                            Tech3285_Req;
-        bool                            Tech3285_Rec;
-        bool                            CodingHistory_Rec;
-        bool                            OriginatorReference_Rec;
-        bool                            INFO_Req;
-        bool                            INFO_Rec;
-        bool                            FADGI_Rec;
-
-        rules()
-        {
-            Tech3285_Req=true;
-            Tech3285_Rec=false;
-            CodingHistory_Rec=false;
-            OriginatorReference_Rec=false;
-            INFO_Req=true;
-            INFO_Rec=false;
-            FADGI_Rec=false;
-        }
-    };
-
-    //---------------------------------------------------------------------------
     //Constructor/Destructor
     mp4_Handler();
     ~mp4_Handler();
@@ -66,11 +42,11 @@ public:
     //---------------------------------------------------------------------------
     //Per Item
     string          Get                 (const string &Field);
-    bool            Set                 (const string &Field, const string &Value, rules Rules);
+    bool            Set                 (const string &Field, const string &Value);
     bool            Remove              (const string &Field);
     string          History             (const string &Field);
     bool            IsOriginal          (const string &Field, const string &Value);
-    bool            IsValid             (const string &Field, const string &Value, rules Rules);
+    bool            IsValid             (const string &Field, const string &Value);
     string          IsValid_LastError   () {return IsValid_Errors.str();}
     bool            IsModified          (const string &Field);
     
@@ -88,16 +64,8 @@ public:
 
     //---------------------------------------------------------------------------
     //Configuration
-    bool            riff2rf64_Reject;
     bool            Overwrite_Reject;
-    bool            NoPadding_Accept;
     bool            NewChunksAtTheEnd;
-    bool            GenerateMD5;
-    bool            VerifyMD5;
-    bool            EmbedMD5;
-    bool            EmbedMD5_AuthorizeOverWritting;
-    unsigned short  Bext_DefaultVersion;
-    unsigned short  Bext_MaxVersion;
     void            Options_Update();
 
     //---------------------------------------------------------------------------
@@ -111,15 +79,15 @@ public:
 private:
     //---------------------------------------------------------------------------
     //Helpers - Per item
-    string          Get             (const string &Field,                       mp4_Base::global::chunk_strings* &Chunk_Strings);
-    bool            Set             (const string &Field, const string &Value,  mp4_Base::global::chunk_strings* &Chunk_Strings, int32u Chunk_Name2, int32u Chunk_Name3=0x00000000);
-    bool            IsModified      (const string &Field,                       mp4_Base::global::chunk_strings* &Chunk_Strings);
-    bool            IsOriginal      (const string &Field, const string &Value,  mp4_Base::global::chunk_strings* &Chunk_Strings);
-    string          History         (const string &Field,                       mp4_Base::global::chunk_strings* &Chunk_Strings);
+    string          Get             (const string &Field,                       mp4_Base::global::block_strings* &Chunk_Strings);
+    bool            Set             (const string &Field, const string &Value,  mp4_Base::global::block_strings* &Chunk_Strings, int32u Chunk_Name2, int32u Chunk_Name3=0x00000000);
+    bool            IsModified      (const string &Field,                       mp4_Base::global::block_strings* &Chunk_Strings);
+    bool            IsOriginal      (const string &Field, const string &Value,  mp4_Base::global::block_strings* &Chunk_Strings);
+    string          History         (const string &Field,                       mp4_Base::global::block_strings* &Chunk_Strings);
     
     //---------------------------------------------------------------------------
-    //Helpers - Retrieval of chunks info
-    mp4_Base::global::chunk_strings** chunk_strings_Get    (const string &Field);
+    //Helpers - Retrieval of blocks info
+    mp4_Base::global::block_strings** block_strings_Get    (const string &Field);
     string Field_Get                                        (const string &Field);
     int32u Chunk_Name2_Get                                  (const string &Field);
     int32u Chunk_Name3_Get                                  (const string &Field);

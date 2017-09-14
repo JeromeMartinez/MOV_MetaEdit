@@ -17,7 +17,7 @@ void mp4_moov_meta_keys::Read_Internal ()
 {
     //Integrity
     if (Global->moov_meta_keys_AlreadyPresent)
-        throw exception_read_chunk("2 moov meta keys chunks");
+        throw exception_read_block("2 moov meta keys blocks");
 
     //Reading
     Read_Internal_ReadAllInBuffer();
@@ -26,7 +26,7 @@ void mp4_moov_meta_keys::Read_Internal ()
     int8u Version;
     Get_B1(Version);
     if (Version)
-        throw exception_read_chunk("moov meta keys version unsupported");
+        throw exception_read_block("moov meta keys version unsupported");
     Skip_XX(3); //Flags
     Get_B4(Entry_count);
     while (Chunk.Content.Buffer_Offset<Chunk.Content.Size)
@@ -34,22 +34,22 @@ void mp4_moov_meta_keys::Read_Internal ()
         int32u Key_size, Key_namespace;
         Get_B4(Key_size);
         if (Key_size<8)
-            throw exception_read_chunk("moov meta keys Key_size invalid");
+            throw exception_read_block("moov meta keys Key_size invalid");
         string Key_value;
         Get_B4(Key_namespace);
         Get_String(Key_size-8, Key_value);
         if (Key_namespace!=0x6D647461 && (Key_value=="com.universaladid.idregistry" || Key_value=="com.universaladid.idvalue")) //mdta
-            throw exception_read_chunk("Ad-ID fields not mdta unsupported");
+            throw exception_read_block("Ad-ID fields not mdta unsupported");
         //Global->moov_meta_keys.push_back(Key_value);
         Global->moov_meta_keys_AlreadyPresent++;
 
         //TEMP
         if ((Key_value == "com.universaladid.idregistry" || Key_value == "com.universaladid.idvalue")) //mdta
-            throw exception_read_chunk("Ad-ID fields already present");
+            throw exception_read_block("Ad-ID fields already present");
     }
 
     if (Entry_count!=Global->moov_meta_keys_AlreadyPresent)
-        throw exception_read_chunk("moov meta keys incoherant");
+        throw exception_read_block("moov meta keys incoherant");
 }
 
 //***************************************************************************

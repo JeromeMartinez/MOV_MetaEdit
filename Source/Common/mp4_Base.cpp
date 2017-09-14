@@ -39,9 +39,9 @@ mp4_Base::~mp4_Base ()
 //***************************************************************************
 
 //---------------------------------------------------------------------------
-void mp4_Base::Read (chunk &Chunk_In)
+void mp4_Base::Read (block &Chunk_In)
 {
-    //Configuring chunk data
+    //Configuring block data
     Chunk.Header.List=Chunk_In.Header.List;
     Chunk.Header.Name=Chunk_In.Header.Name;
     Chunk.Header.Size=Chunk.Header.List==0x00000000?8:12;
@@ -104,7 +104,7 @@ void mp4_Base::Read (chunk &Chunk_In)
         Global->Trace<<endl;
     }
 
-    //Specific to a chunk
+    //Specific to a block
     Read_Internal();
 
     if (Chunk.Content.IsModified)
@@ -133,7 +133,7 @@ void mp4_Base::Read (chunk &Chunk_In)
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Base::Read_Header (chunk &NewChunk)
+bool mp4_Base::Read_Header (block &NewChunk)
 {
     int8u Temp[8];
 
@@ -171,7 +171,7 @@ bool mp4_Base::Read_Header (chunk &NewChunk)
         NewChunk.Header.Size = 16;
 
         //TEMP
-        throw exception_read_chunk("big files currently not supported");
+        throw exception_read_block("big files currently not supported");
     }
 
     NewChunk.Content.Size -= NewChunk.Header.Size;
@@ -186,7 +186,7 @@ void mp4_Base::Read_Internal_ReadAllInBuffer ()
     if (Chunk.Content.Size==0) //Chunk.Content.Size may be set to something else for customizing
         Chunk.Content.Size=Chunk.Content.Size;
     if (Chunk.Content.Size>(size_t)-1)
-        throw exception_read_chunk("non-audio data exceeds available memory");
+        throw exception_read_block("non-audio data exceeds available memory");
 
     delete Chunk.Content.Buffer; Chunk.Content.Buffer=NULL;
 
@@ -196,7 +196,7 @@ void mp4_Base::Read_Internal_ReadAllInBuffer ()
     }
     catch(...)
     {
-        throw exception_read_chunk("non-audio data exceeds available memory");
+        throw exception_read_block("non-audio data exceeds available memory");
     }
 
     //Reading
@@ -296,13 +296,13 @@ void mp4_Base::Write ()
     else if (!IsModified())
         return; //Nothing to do if the file is not modifed (Level 0)
 
-    //Testing if chunk order is valid from user preferences
+    //Testing if block order is valid from user preferences
     if (Chunk.Header.Level==0 && Global->NewChunksAtTheEnd)
     {
         bool DataChunkMustBeMoved;
         do
         {
-            //Calculating the size of WAVE chunk up to data chunk
+            //Calculating the size of WAVE block up to data block
             int64u File_Begin_Offset_Theory=Subs[0]->Chunk.Header.Size;
             size_t Pos=0;
             for (; Pos<Subs[0]->Subs.size(); Pos++)
@@ -312,11 +312,11 @@ void mp4_Base::Write ()
                 File_Begin_Offset_Theory+=Subs[0]->Subs[Pos]->Block_Size_Get();
             }
             if (Pos==Subs[0]->Subs.size())
-                throw exception_write("Should never happen, please contact the developper (mdat chunk not found)");
+                throw exception_write("Should never happen, please contact the developper (mdat block not found)");
 
-            if (File_Begin_Offset_Theory+8>Global->mdat->File_Offset-8 && File_Begin_Offset_Theory!=Global->mdat->File_Offset-8) //if data chunk must be moved
+            if (File_Begin_Offset_Theory+8>Global->mdat->File_Offset-8 && File_Begin_Offset_Theory!=Global->mdat->File_Offset-8) //if data block must be moved
             {
-                //Moving a chunk at the end
+                //Moving a block at the end
                 while (Pos>0)
                 {
                     Pos--;

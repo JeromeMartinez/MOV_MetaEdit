@@ -108,16 +108,8 @@ const char* xxxx_Strings[][17]=
 mp4_Handler::mp4_Handler ()
 {
     //Configuration
-    riff2rf64_Reject=false;
     Overwrite_Reject=false;
-    NoPadding_Accept=false;
     NewChunksAtTheEnd=false;
-    GenerateMD5=false;
-    VerifyMD5=false;
-    EmbedMD5=false;
-    EmbedMD5_AuthorizeOverWritting=false;
-    Bext_DefaultVersion=0;
-    Bext_MaxVersion=2;
 
     //Internal
     Chunks=NULL;
@@ -161,7 +153,7 @@ bool mp4_Handler::Open(const string &FileName)
         Chunks->Global->File_Date=Chunks->Global->In.Modified_Local_Get();
 
     //Base
-    mp4_Base::chunk Chunk;
+    mp4_Base::block Chunk;
     Chunk.Content.Size=Chunks->Global->File_Size;
     Options_Update();
 
@@ -178,7 +170,7 @@ bool mp4_Handler::Open(const string &FileName)
         Chunks->Global->Canceling=false;
         ReturnValue=false;
     }
-    catch (exception_read_chunk &e)
+    catch (exception_read_block &e)
     {
         Errors<<Chunks->Global->File_Name.To_Local()<<": "<<Ztring().From_CC4(Chunk.Header.Name).To_Local()<<" "<<e.what()<<endl;
         PerFile_Error<<Ztring().From_CC4(Chunk.Header.Name).To_Local()<<" "<<e.what()<<endl;
@@ -223,7 +215,7 @@ bool mp4_Handler::Save()
         return false;
     }
 
-    //Modifying the chunks in memory
+    //Modifying the blocks in memory
     /*
     for (size_t Fields_Pos=0; Fields_Pos<Fields_Max; Fields_Pos++)
         for (size_t Pos=0; Pos<xxxx_Strings_Size[Fields_Pos]; Pos++)
@@ -288,7 +280,7 @@ bool mp4_Handler::Save()
 //---------------------------------------------------------------------------
 string mp4_Handler::Get(const string &Field)
 {
-    mp4_Base::global::chunk_strings** Chunk_Strings=chunk_strings_Get(Field);
+    mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
     if (!Chunk_Strings || !*Chunk_Strings)
         return string();
     
@@ -296,7 +288,7 @@ string mp4_Handler::Get(const string &Field)
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Handler::Set(const string &Field, const string &Value, rules Rules)
+bool mp4_Handler::Set(const string &Field, const string &Value)
 {
     //Integrity
     if (Chunks==NULL)
@@ -326,13 +318,13 @@ bool mp4_Handler::Remove(const string &Field)
         return false;
     }
 
-    return Set(Field, string(), *chunk_strings_Get(Field), Chunk_Name2_Get(Field), Chunk_Name3_Get(Field)); 
+    return Set(Field, string(), *block_strings_Get(Field), Chunk_Name2_Get(Field), Chunk_Name3_Get(Field)); 
 }
 
 //---------------------------------------------------------------------------
 bool mp4_Handler::IsModified(const string &Field)
 {
-    mp4_Base::global::chunk_strings** Chunk_Strings=chunk_strings_Get(Field);
+    mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
     if (!Chunk_Strings || !*Chunk_Strings)
         return false;
     
@@ -340,7 +332,7 @@ bool mp4_Handler::IsModified(const string &Field)
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Handler::IsValid(const string &Field_, const string &Value_, rules Rules)
+bool mp4_Handler::IsValid(const string &Field_, const string &Value_)
 {
     if (!IsValid_Errors.str().empty())
     {
@@ -354,7 +346,7 @@ bool mp4_Handler::IsValid(const string &Field_, const string &Value_, rules Rule
 //---------------------------------------------------------------------------
 bool mp4_Handler::IsOriginal(const string &Field, const string &Value)
 {
-    mp4_Base::global::chunk_strings** Chunk_Strings=chunk_strings_Get(Field);
+    mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
     if (!Chunk_Strings || !*Chunk_Strings)
         return true;
     
@@ -364,7 +356,7 @@ bool mp4_Handler::IsOriginal(const string &Field, const string &Value)
 //---------------------------------------------------------------------------
 string mp4_Handler::History(const string &Field)
 {
-    mp4_Base::global::chunk_strings** Chunk_Strings=chunk_strings_Get(Field);
+    mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
     if (!Chunk_Strings || !*Chunk_Strings)
         return string();
     
@@ -460,7 +452,7 @@ bool mp4_Handler::IsValid_Get()
 //***************************************************************************
 
 //---------------------------------------------------------------------------
-string mp4_Handler::Get(const string &Field, mp4_Base::global::chunk_strings* &Chunk_Strings)
+string mp4_Handler::Get(const string &Field, mp4_Base::global::block_strings* &Chunk_Strings)
 {
     if (!File_IsValid)
         return string();
@@ -469,7 +461,7 @@ string mp4_Handler::Get(const string &Field, mp4_Base::global::chunk_strings* &C
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Handler::Set(const string &Field, const string &Value, mp4_Base::global::chunk_strings* &Chunk_Strings, int32u Chunk_Name2, int32u Chunk_Name3)
+bool mp4_Handler::Set(const string &Field, const string &Value, mp4_Base::global::block_strings* &Chunk_Strings, int32u Chunk_Name2, int32u Chunk_Name3)
 {
     if (!File_IsValid
      || &Chunk_Strings==NULL) 
@@ -499,7 +491,7 @@ bool mp4_Handler::Set(const string &Field, const string &Value, mp4_Base::global
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Handler::IsOriginal(const string &Field, const string &Value, mp4_Base::global::chunk_strings* &Chunk_Strings)
+bool mp4_Handler::IsOriginal(const string &Field, const string &Value, mp4_Base::global::block_strings* &Chunk_Strings)
 {
     if (!File_IsValid || &Chunk_Strings==NULL || Chunk_Strings==NULL)
         return Value.empty();
@@ -515,7 +507,7 @@ bool mp4_Handler::IsOriginal(const string &Field, const string &Value, mp4_Base:
 }
 
 //---------------------------------------------------------------------------
-bool mp4_Handler::IsModified(const string &Field, mp4_Base::global::chunk_strings* &Chunk_Strings)
+bool mp4_Handler::IsModified(const string &Field, mp4_Base::global::block_strings* &Chunk_Strings)
 {
     if (!File_IsValid)
         return false;
@@ -537,7 +529,7 @@ bool mp4_Handler::IsModified(const string &Field, mp4_Base::global::chunk_string
 }
 
 //---------------------------------------------------------------------------
-string mp4_Handler::History(const string &Field, mp4_Base::global::chunk_strings* &Chunk_Strings)
+string mp4_Handler::History(const string &Field, mp4_Base::global::block_strings* &Chunk_Strings)
 {
     if (!File_IsValid)
         return string();
@@ -559,11 +551,11 @@ void mp4_Handler::Options_Update()
 }
 
 //***************************************************************************
-// Helpers - Retrieval of chunks info
+// Helpers - Retrieval of blocks info
 //***************************************************************************
 
 //---------------------------------------------------------------------------
-mp4_Base::global::chunk_strings** mp4_Handler::chunk_strings_Get(const string &Field)
+mp4_Base::global::block_strings** mp4_Handler::block_strings_Get(const string &Field)
 {
     if (Chunks==NULL || Chunks->Global==NULL)
         return NULL;    
