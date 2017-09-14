@@ -24,30 +24,35 @@ Core::Core()
 //---------------------------------------------------------------------------
 void Core::Dummy_Handler(const QString &FileName)
 {
-
     FileInfo Current;
-    MetaDataList MetaData;
 
-    Current.Modified = false;
-
-    Current.CurrentRegistry = "ad-id.org";
-    MetaData.insert("ad-id.org", "");
-
-    QString BaseName = QFileInfo(FileName).baseName();
-    int Pos = 0;
-    if(Current.Valid && AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
-    {
-        MetaData["ad-id.org"] = BaseName;
-        Current.Modified = true;
-    }
-
-    Current.MetaData = MetaData;
-
+    //Paring the file
     Current.H = new mp4_Handler();
     Current.H->Open(FileName.toLocal8Bit().constData());
     if (Current.H->PerFile_Error.str().empty())
         Current.Valid = true;
 
+    //UniversalAdId values
+    MetaDataList MetaData;
+    string idregistry = Current.H->Get("com.universaladid.idregistry");
+    string idvalue = Current.H->Get("com.universaladid.idvalue");
+    if (Current.Valid && idregistry.empty() && idvalue.empty())
+    {
+        //Trying from file name
+        QString BaseName = QFileInfo(FileName).baseName();
+        int Pos = 0;
+        if (AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
+        {
+            idvalue = BaseName.toUtf8().constData();
+            Current.Modified = true;
+        }
+    }
+
+    Current.CurrentRegistry=QString::fromUtf8(idregistry.c_str());
+    MetaData.insert(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));
+    Current.MetaData = MetaData;
+
+    //Adding it to the list
     Files.insert(FileName, Current);
 }
 

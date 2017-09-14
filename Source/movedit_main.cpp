@@ -92,11 +92,6 @@ int main(int argc, char* argv[])
 
     if (FileNames.empty())
         return Usage();
-    if (AdID_Requested && !simulate)
-    {
-        cerr << "Ad-ID injection is not yet implemented, forcing simulation" << endl;
-        simulate=true;
-    }
     ZtringList List;
     for (size_t i=0; i<FileNames.size(); i++)
         List+=Dir::GetAllFileNames(FileNames[i]);
@@ -190,7 +185,7 @@ int main(int argc, char* argv[])
     cout << FileNameFake << "| OK|  PAR|M|Width|w-scale|M|" << endl;
     }
     else
-        cout << FileNameFake << "| OK| Registry|Ad-ID value" << endl;
+        cout << FileNameFake << "|OK?| Registry|UniversalAdId value" << endl;
     ZtringList::iterator ItemName = List.begin();
     ZtringList ListNotDetected;
     ZtringList ListNotCorrected;
@@ -207,12 +202,39 @@ int main(int argc, char* argv[])
         {
             cout << Name << '|';
 
+            mp4_Handler* H = (mp4_Handler*)(*Item); //Hack for storing mp4_Handler
+
             AdID AdID_Content_Temp=AdID_Content;
             AdID_Content_Temp.SetName(Name);
+            bool OK = AdID_Content_Temp.Validate();
+            if (OK)
+            {
+                if (!H->Errors.str().empty())
+                    OK = false;
+            }
+            if (OK)
+            {
+                H->Set("com.universaladid.idregistry", AdID_Content_Temp.GetRegistry().c_str());
+                H->Set("com.universaladid.idvalue", AdID_Content_Temp.Get().c_str());
 
-            cout<< (AdID_Content_Temp.Validate()?"Yes":" No") << '|';
+                if (!simulate)
+                    H->Save();
 
-            cout << AdID_Content_Temp.GetRegistry() << '|';
+                if (!H->PerFile_Error.str().empty())
+                    OK = false;
+            }
+
+            cout<< (OK?"Yes":" No") << '|';
+
+            string Registry;
+            if (OK)
+                Registry = AdID_Content_Temp.GetRegistry();
+            else if (!AdID_Content_Temp.ErrorMessage.empty() || !H->PerFile_Error.str().empty())
+                Registry = H->Get("com.universaladid.idregistry"); // showing it if already present in the file
+            if (Registry.size() < 9)
+                Registry.insert(0, 9 - Registry.size(), ' ');
+
+            cout << Registry << '|';
 
             if (!AdID_Content_Temp.ErrorMessage.empty())
             {
@@ -222,16 +244,18 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            mp4_Handler* H = (mp4_Handler*)(*Item); //Hack for storing mp4_Handler
-
-            H->Set("com.universaladid.idregistry", AdID_Content_Temp.GetRegistry().c_str(), mp4_Handler::rules());
-            H->Set("com.universaladid.idvalue", AdID_Content_Temp.Get().c_str(), mp4_Handler::rules());
-
-            H->Save();
-
-            if (!H->Errors.str().empty())
+            if (!H->PerFile_Error.str().empty())
             {
-                cout << H->Errors.str() << endl;
+                string Value = H->Get("com.universaladid.idvalue"); // showing it if already present in the file
+                if (!Value.empty())
+                    cout << Value << ", ";
+
+                string Error=H->PerFile_Error.str();
+                size_t End = Error.find_last_not_of(" \r\n");
+                if (End != string::npos)
+                    Error.resize(End+1);
+                
+                cout << Error << endl;
 
                 ItemName++;
                 continue;

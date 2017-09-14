@@ -230,9 +230,9 @@ void TableWidget::Setup(Core *C)
     QStringList Header_Labels;
 
     Header_Labels.append("File Name");
-    Header_Labels.append("OK");
-    Header_Labels.append("Registry");
-    Header_Labels.append("Value");
+    Header_Labels.append("OK?");
+    Header_Labels.append("UniversalAdId Registry");
+    Header_Labels.append("UniversalAdId Value");
     setColumnCount(4);
     setHorizontalHeaderLabels(Header_Labels);
 #if QT_VERSION < 0x050000
@@ -316,8 +316,8 @@ void TableWidget::Update_Table()
             setItem(rowCount() - 1, 0, Item);
             setItem(rowCount() - 1, 1, new QTableWidgetItem(It->Valid?"Yes":It->H->PerFile_Error.str().c_str()));
 
-            setItem(rowCount() - 1, 2, new QTableWidgetItem(It->Valid?"ad-id.org":""));
-            setItem(rowCount() - 1, 3, new QTableWidgetItem(It->Valid ? It->MetaData["ad-id.org"]:""));
+            setItem(rowCount() - 1, 2, new QTableWidgetItem(It->CurrentRegistry));
+            setItem(rowCount() - 1, 3, new QTableWidgetItem(It->MetaData[It->CurrentRegistry]));
 
             if (It->Valid)
                 Set_Modified(rowCount() - 1, It->Modified);

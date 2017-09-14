@@ -172,8 +172,8 @@ bool mp4_Handler::Open(const string &FileName)
     }
     catch (exception_read_block &e)
     {
-        Errors<<Chunks->Global->File_Name.To_Local()<<": "<<Ztring().From_CC4(Chunk.Header.Name).To_Local()<<" "<<e.what()<<endl;
-        PerFile_Error<<Ztring().From_CC4(Chunk.Header.Name).To_Local()<<" "<<e.what()<<endl;
+        Errors<<Chunks->Global->File_Name.To_Local()<<": "<<(Chunk.Header.Name?(Ztring().From_CC4(Chunk.Header.Name).To_Local()+" "):string())<<" "<<e.what()<<endl;
+        PerFile_Error<<(Chunk.Header.Name?(Ztring().From_CC4(Chunk.Header.Name).To_Local()+" "):string())<<e.what()<<endl;
     }
     catch (exception &e)
     {
@@ -280,6 +280,18 @@ bool mp4_Handler::Save()
 //---------------------------------------------------------------------------
 string mp4_Handler::Get(const string &Field)
 {
+    if (Field=="com.universaladid.idregistry" || Field == "com.universaladid.idvalue")
+    {
+        if (!Chunks || !Chunks->Global || !Chunks->Global->moov_meta_ilst)
+            return string();
+
+        map<string, string>::iterator Value=Chunks->Global->moov_meta_ilst->KnownValues.find(Field);
+        if (Value==Chunks->Global->moov_meta_ilst->KnownValues.end())
+            return string();
+
+        return Value->second;
+    }
+        
     mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
     if (!Chunk_Strings || !*Chunk_Strings)
         return string();
@@ -496,10 +508,6 @@ bool mp4_Handler::IsOriginal(const string &Field, const string &Value, mp4_Base:
     if (!File_IsValid || &Chunk_Strings==NULL || Chunk_Strings==NULL)
         return Value.empty();
    
-    //Special cases
-    if (Field=="timereference (translated)" && &Chunk_Strings && Chunk_Strings && Chunk_Strings->Strings.find("timereference")!=Chunk_Strings->Strings.end())
-        return IsOriginal("timereference", Get("timereference"));
-
     if (Chunk_Strings->Histories[Field].empty())
         return Value==Chunk_Strings->Strings[Field];
    
@@ -512,16 +520,8 @@ bool mp4_Handler::IsModified(const string &Field, mp4_Base::global::block_string
     if (!File_IsValid)
         return false;
 
-    //Special cases
-    if (Field=="timereference (translated)" && &Chunk_Strings && Chunk_Strings && Chunk_Strings->Strings.find("timereference")!=Chunk_Strings->Strings.end())
-        return IsModified("timereference");
-
     if (&Chunk_Strings!=NULL && Chunk_Strings && Chunk_Strings->Histories.find(Field)!=Chunk_Strings->Histories.end())
     {
-        //Special cases
-        if (Field=="bextversion")
-            return !Chunk_Strings->Histories["bextversion"].empty() && !(Chunk_Strings->Strings["bextversion"]=="0" || Chunk_Strings->Histories["bextversion"][0]==Chunk_Strings->Strings["bextversion"]);
-
         return !Chunk_Strings->Histories[Field].empty() && Chunk_Strings->Histories[Field][0]!=Chunk_Strings->Strings[Field];
     }
     else

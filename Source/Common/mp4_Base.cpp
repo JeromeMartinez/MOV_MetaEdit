@@ -128,7 +128,12 @@ void mp4_Base::Read (block &Chunk_In)
             throw exception_valid("too many moov atoms");
         //moov must be after mdat
         if (Global->moov[0]->File_Offset < Global->mdat->File_Offset)
-            throw exception_valid("faststart not yet supported");
+            throw exception_read_block("Faststart not yet supported");
+        //UniversalAdId fields already present not supported
+        if (Global->moov_meta_keys)
+            for (size_t i=0; i<Global->moov_meta_keys->Keys.size(); i++)
+                if ((Global->moov_meta_keys->Keys[i] == "com.universaladid.idregistry" || Global->moov_meta_keys->Keys[i] == "com.universaladid.idvalue")) //mdta
+                    throw exception_read_block("UniversalAdId fields already present");
     }
 }
 
@@ -171,7 +176,7 @@ bool mp4_Base::Read_Header (block &NewChunk)
         NewChunk.Header.Size = 16;
 
         //TEMP
-        throw exception_read_block("big files currently not supported");
+        throw exception_read_block("Big files currently not supported");
     }
 
     NewChunk.Content.Size -= NewChunk.Header.Size;

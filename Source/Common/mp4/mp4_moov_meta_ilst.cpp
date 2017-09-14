@@ -15,58 +15,63 @@
 //---------------------------------------------------------------------------
 void mp4_moov_meta_ilst::Read_Internal ()
 {
-    /*
-    SUBS_BEGIN();
-        SUB_ELEMENT_DEFAULT(moov_meta_ilst_xxxx);
-    SUBS_END_DEFAULT();
-    */
-
     //Integrity
-    if (Global->moov_meta_ilst_AlreadyPresent)
+    if (Global->moov_meta_ilst)
         throw exception_read_block("2 moov meta ilst blocks");
-    Global->moov_meta_ilst_AlreadyPresent++; //Global, we don't read ilst
+    if (!Global->moov_meta_keys)
+        throw exception_read_block("moov meta ilst is expected after moov meta keys");
+    Global->moov_meta_ilst=new mp4_Base::global::block_moov_meta_ilst;
 
     //Reading
     Read_Internal_ReadAllInBuffer();
-}
 
-/*
-//---------------------------------------------------------------------------
-size_t mp4_moov_meta_ilst::Insert_Internal (int32u Chunk_Name_Insert)
-{
-    mp4_Base* NewChunk;
-    switch (Chunk_Name_Insert)
+    //Parsing
+    while (Chunk.Content.Buffer_Offset < Chunk.Content.Size)
     {
-        default                  :  return Subs.size();
-    }
-
-    size_t Subs_Pos;
-    switch (Chunk_Name_Insert)
-    {
-        default                  :  return Subs.size();
-    }
-
-    NewChunk->Modify();
-    if (!NewChunk->IsRemovable())
-    {
-        if (Subs_Pos<Subs.size())
+        int32u Key_size, Key_Pos;
+        Get_B4(Key_size);
+        if (Key_size<8)
+            throw exception_read_block("moov meta ilst atom size invalid");
+        Get_B4(Key_Pos);
+        if (!Key_Pos || Key_Pos>Global->moov_meta_keys->Keys.size())
+            throw exception_read_block("moov meta ilst atom name invalid");
+        if (Global->moov_meta_keys->Keys[Key_Pos-1]=="com.universaladid.idregistry" || Global->moov_meta_keys->Keys[Key_Pos-1]=="com.universaladid.idvalue")
         {
-            Subs.insert(Subs.begin()+Subs_Pos+1, NewChunk); //First place after fmt, always
-            return Subs_Pos+1;
+            int64u SizeMax=Chunk.Content.Buffer_Offset+Key_size-8;
+            while (Chunk.Content.Buffer_Offset<SizeMax)
+            {
+                int32u size, name;
+                Get_B4(size);
+                if (size<8)
+                    throw exception_read_block("moov meta ilst atom size invalid");
+                Get_B4(name);
+                if (name==0x64617461) //data
+                {
+                    if (size<16)
+                        throw exception_read_block("moov meta ilst data atom size invalid");
+                    int32u format, locale;
+                    Get_B4(format);
+                    if (format!=1)
+                        throw exception_read_block("universaladid format out of specs");
+                    Get_B4(locale);
+                    if (locale)
+                        throw exception_read_block("universaladid locale out of specs");
+                    string Value;
+                    Get_String(size-16, Value);
+                    Global->moov_meta_ilst->KnownValues[Global->moov_meta_keys->Keys[Key_Pos - 1]] = Value;
+                }
+                else
+                    Skip_XX(size-8);
+            }
         }
         else
         {
-            Subs.push_back(NewChunk); //At the end
-            return Subs.size()-1;
+            //Skip
+            Skip_XX(Key_size-8);
         }
-    }
-    else
-    {
-        delete NewChunk; //NewChunk=NULL;
-        return Subs.size();
+
     }
 }
-*/
 
 //***************************************************************************
 // Modify

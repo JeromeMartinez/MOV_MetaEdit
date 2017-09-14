@@ -16,8 +16,9 @@
 void mp4_moov_meta_keys::Read_Internal ()
 {
     //Integrity
-    if (Global->moov_meta_keys_AlreadyPresent)
+    if (Global->moov_meta_keys)
         throw exception_read_block("2 moov meta keys blocks");
+    Global->moov_meta_keys=new mp4_Base::global::block_moov_meta_keys;
 
     //Reading
     Read_Internal_ReadAllInBuffer();
@@ -39,13 +40,9 @@ void mp4_moov_meta_keys::Read_Internal ()
         Get_B4(Key_namespace);
         Get_String(Key_size-8, Key_value);
         if (Key_namespace!=0x6D647461 && (Key_value=="com.universaladid.idregistry" || Key_value=="com.universaladid.idvalue")) //mdta
-            throw exception_read_block("Ad-ID fields not mdta unsupported");
-        //Global->moov_meta_keys.push_back(Key_value);
+            throw exception_read_block("UniversalAdId fields not mdta unsupported");
+        Global->moov_meta_keys->Keys.push_back(Key_value);
         Global->moov_meta_keys_AlreadyPresent++;
-
-        //TEMP
-        if ((Key_value == "com.universaladid.idregistry" || Key_value == "com.universaladid.idvalue")) //mdta
-            throw exception_read_block("Ad-ID fields already present");
     }
 
     if (Entry_count!=Global->moov_meta_keys_AlreadyPresent)

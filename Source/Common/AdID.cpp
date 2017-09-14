@@ -70,7 +70,7 @@ bool AdID::Validate()
         if (Value.size()<11 || Value.size()>12)
         {
             stringstream t;
-            t << "For registry ad-id.org, Ad-ID length must be between 11 and 12 (actual: " << Value.size() << ")";
+            t << "For registry ad-id.org, UniversalAdId length must be between 11 and 12 (actual: " << Value.size() << ")";
             ErrorMessage = t.str();
             return false;
         }
@@ -79,7 +79,7 @@ bool AdID::Validate()
             if (!((Value[i]>='A' && Value[i]<='Z') || (Value[i]>='0' && Value[i]<='9')))
             {
                 stringstream t;
-                t << "For registry ad-id.org, Ad-ID length must contain character in range A-Z 0-9 (not the case for pos " << i << ")";
+                t << "For registry ad-id.org, UniversalAdId length must contain character in range A-Z 0-9 (not the case for pos " << i << ")";
                 ErrorMessage = t.str();
                 return false;
             }
@@ -89,7 +89,7 @@ bool AdID::Validate()
         if (Value.size()>255)
         {
             stringstream t;
-            t << "Ad-ID length should not be more than 255 (actual: " << Value.size() << ")";
+            t << "UniversalAdId length should not be more than 255 (actual: " << Value.size() << ")";
             ErrorMessage = t.str();
             return false;
         }

@@ -124,6 +124,22 @@ public:
                 File_Offset=(int64u)-1;
             }
         };
+        struct block_moov_meta_ilst
+        {
+            map<string, string> KnownValues;
+
+            block_moov_meta_ilst()
+            {
+            }
+        };
+        struct block_moov_meta_keys
+        {
+            vector<string>      Keys;
+
+            block_moov_meta_keys()
+            {
+            }
+        };
         struct block_strings
         {
             map<string, string> Strings;
@@ -155,6 +171,8 @@ public:
         stringstream        Trace;
         block_mdat         *mdat;
         vector<block_moov*> moov;
+        block_moov_meta_ilst* moov_meta_ilst;
+        block_moov_meta_keys* moov_meta_keys;
         vector<string>      moov_meta_keys_NewKeys;
         size_t              moov_meta_keys_AlreadyPresent;
         vector<string>      moov_meta_ilst_NewValues;
@@ -171,6 +189,8 @@ public:
         {
             File_Size=0;
             mdat=NULL;
+            moov_meta_ilst=NULL;
+            moov_meta_keys=NULL;
             moov_meta_keys_AlreadyPresent=0;
             moov_meta_ilst_AlreadyPresent=0;
             NewChunksAtTheEnd=false;
@@ -184,6 +204,8 @@ public:
         ~global()
         {
             delete mdat;
+            delete moov_meta_ilst;
+            delete moov_meta_keys;
         }
     };
 
