@@ -12,6 +12,18 @@
 #include "tablewidget.h"
 
 //***************************************************************************
+// Info
+//***************************************************************************
+
+static const int ColumnSize[4] =
+{
+    55,
+     5,
+    20,
+    20,
+};
+
+//***************************************************************************
 // Helpers
 //***************************************************************************
 
@@ -32,8 +44,13 @@ QValidator::State AdIdValidator::validate(QString& Input, int& Pos) const
     QString Acceptable = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     for(int Pos = 0; Pos < Input.size(); Pos++)
+    {
+        if (Input[Pos] >= 'a' && Input[Pos] <= 'z')
+            Input[Pos] = Input[Pos].toUpper();
+
         if(!Acceptable.contains(Input.at(Pos)))
             return QValidator::Invalid;
+    }
 
     if(Input.size() < 11)
         return QValidator::Intermediate;
@@ -128,6 +145,7 @@ void ComboBoxDelegate::setModelData(QWidget* Editor,
 
     Model->setData(Index, Registry);
     Model->setData(Index.sibling(Index.row(), VALUE_COLUMN), Value);
+    (*C->Get_Files())[FileName].CurrentRegistry = Registry;
 }
 
 //---------------------------------------------------------------------------
@@ -217,9 +235,10 @@ void TableWidget::Setup(Core *C)
     QStringList Header_Labels;
 
     Header_Labels.append("File Name");
+    Header_Labels.append("OK?");
     Header_Labels.append("Registry");
     Header_Labels.append("Value");
-    setColumnCount(3);
+    setColumnCount(4);
     setHorizontalHeaderLabels(Header_Labels);
 #if QT_VERSION < 0x050000
     horizontalHeader()->setResizeMode(QHeaderView::Interactive);
@@ -227,16 +246,11 @@ void TableWidget::Setup(Core *C)
     horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 #endif
 
-    //TODO: load and save user preference
-    setColumnWidth(0, width() * 60 / 100);
-    setColumnWidth(1, width() * 20 / 100);
-    setColumnWidth(2, width() * 20 / 100);
-
     ItemDelegate* ItemEditor = new ItemDelegate(NULL, C);
     connect(ItemEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
 
-    setItemDelegateForColumn(1, qobject_cast<QAbstractItemDelegate*>(new ComboBoxDelegate(NULL, C)));
-    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
+    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(new ComboBoxDelegate(NULL, C)));
+    setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
 }
 
 //---------------------------------------------------------------------------
@@ -254,8 +268,27 @@ void TableWidget::Set_Modified(int Row, bool Modified)
 }
 
 //---------------------------------------------------------------------------
+void TableWidget::Set_Valid(int Row, bool Valid)
+{
+    if (Valid || Row > this->rowCount())
+        return;
+
+    for (int Col = 0; Col < this->columnCount(); Col++)
+    {
+        Qt::ItemFlags Flags = this->item(Row, Col)->flags();
+        if(Flags.testFlag(Qt::ItemIsEnabled))
+            Flags &= ~Qt::ItemIsEnabled;
+        if(Flags.testFlag(Qt::ItemIsSelectable))
+            Flags &= ~Qt::ItemIsSelectable;
+        this->item(Row, Col)->setFlags(Flags);
+    }
+}
+
+//---------------------------------------------------------------------------
 void TableWidget::Update_Table()
 {
+    size_t Valid = 0;
+    
     //Get opened files
     FileList* Files = C->Get_Files();
 
@@ -274,7 +307,11 @@ void TableWidget::Update_Table()
 
         Entries.append(Entry);
         //Display modified entries in bold
+        Set_Valid(Row, Files->value(Entry).Valid);
         Set_Modified(Row, Files->value(Entry).Modified);
+
+        if (Files->value(Entry).Valid)
+            Valid++;
     }
 
     //Display new files
@@ -282,18 +319,39 @@ void TableWidget::Update_Table()
     {
         if(!Entries.contains(It.key()))
         {
-            QTableWidgetItem* Item = new QTableWidgetItem(It.key());
-            Item->setFlags(Item->flags() ^ Qt::ItemIsEditable);
+            QTableWidgetItem* Name = new QTableWidgetItem(It.key());
+            Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
+            QTableWidgetItem* OK = new QTableWidgetItem(It->Valid ? "Yes" : QString ("No: ")+It->H->PerFile_Error.str().c_str());
+            OK->setFlags(OK->flags() ^ Qt::ItemIsEditable);
+            if (!It->Valid)
+                OK->setToolTip(It->H->PerFile_Error.str().c_str());
+            QTableWidgetItem* Registry = new QTableWidgetItem(It->CurrentRegistry);
+            if (It->Valid)
+                Registry->setToolTip("Double-click for editing the Universal Ad-ID registry of this file.");
+            QTableWidgetItem* Value = new QTableWidgetItem(It->MetaData[It->CurrentRegistry]);
+            if (It->Valid)
+                Value->setToolTip("Double-click for editing the Universal Ad-ID value of this file.\nA-Z 0-9 only.");
 
             insertRow(rowCount());
-            setItem(rowCount() - 1, 0, Item);
+            setItem(rowCount() - 1, 0, Name);
+            setItem(rowCount() - 1, 1, OK);
+            setItem(rowCount() - 1, 2, Registry);
+            setItem(rowCount() - 1, 3, Value);
 
-            setItem(rowCount() - 1, 1, new QTableWidgetItem("ad-id.org"));
-            setItem(rowCount() - 1, 2, new QTableWidgetItem(It->MetaData["ad-id.org"]));
-
-            Set_Modified(rowCount() - 1, It->Modified);
+            if (It->Valid)
+            {
+                Set_Modified(rowCount() - 1, It->Modified);
+                Valid++;
+            }
+            else
+                Set_Valid(rowCount() - 1, false);
         }
     }
+
+    if (Valid)
+        setStatusTip(QString::number(Valid)+ " editable files found, double-click on Registry or Value cells for editing then save");
+    else
+        setStatusTip("Drag and drop some MOV/MP4 files");
 }
 
 //---------------------------------------------------------------------------
@@ -303,15 +361,10 @@ void TableWidget::resizeEvent(QResizeEvent* Event)
     if(!horizontalScrollBar()->isVisible())
     {
         qreal Total_New = Event->size().width();
-        //Get the current space occupied by each column
-        qreal Total_Old = columnWidth(0) + columnWidth(1) + columnWidth(2);
-        qreal Col0_Percent = columnWidth(0) * 100 / Total_Old;
-        qreal Col1_Percent = columnWidth(1) * 100 / Total_Old;
-        qreal Col2_Percent = columnWidth(1) * 100 / Total_Old;
-
-        setColumnWidth(0, Total_New * Col0_Percent / 100);
-        setColumnWidth(1, Total_New * Col1_Percent / 100);
-        setColumnWidth(2, Total_New * Col2_Percent / 100);
+        setColumnWidth(0, Total_New * ColumnSize[0] / 100);
+        setColumnWidth(1, Total_New * ColumnSize[1] / 100);
+        setColumnWidth(2, Total_New * ColumnSize[2] / 100);
+        setColumnWidth(3, Total_New * ColumnSize[3] / 100);
     }
     //Call base resizeEvent to handle the vertical resizing
     QTableView::resizeEvent(Event);

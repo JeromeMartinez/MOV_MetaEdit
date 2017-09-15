@@ -7,18 +7,28 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include "Common/mp4_Handler.h"
 #include <QMap>
 #include <QString>
 
 typedef QMap<QString, QString> MetaDataList;
 
-struct File
+struct FileInfo
 {
+    bool         Valid;
     bool         Modified;
     MetaDataList MetaData;
+    QString      CurrentRegistry;
+    mp4_Handler* H;
+
+    FileInfo()
+        : Valid(false)
+        , Modified(false)
+        , H(NULL)
+    {}
 };
 
-typedef QMap<QString, File> FileList;
+typedef QMap<QString, FileInfo> FileList;
 
 class Core
 {
@@ -35,6 +45,8 @@ public:
     size_t Files_Count() { return Files.size(); }
 
     FileList* Get_Files() { return &Files; }
+
+    bool Save_File(const QString& FileName);
 
 private:
     FileList Files;
