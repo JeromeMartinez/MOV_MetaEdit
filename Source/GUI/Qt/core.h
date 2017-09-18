@@ -9,16 +9,16 @@
 
 #include "Common/mp4_Handler.h"
 #include <QMap>
+#include <QPair>
 #include <QString>
 
-typedef QMap<QString, QString> MetaDataList;
+typedef QPair<QString, QString> MetaDataType;
 
 struct FileInfo
 {
     bool         Valid;
     bool         Modified;
-    MetaDataList MetaData;
-    QString      CurrentRegistry;
+    MetaDataType MetaData;
     mp4_Handler* H;
 
     FileInfo()
@@ -34,13 +34,11 @@ class Core
 {
 public:
     Core();
-
-    // Fill Files list with FileName and fake data
-    void Dummy_Handler(const QString& FileName);
+    void Dummy_Handler(const QString &FileName);
 
     size_t Open_Files(const QString& FileName);
 
-    MetaDataList* Get_MetaData(const QString& FileName);
+    MetaDataType* Get_MetaData(const QString& FileName);
 
     size_t Files_Count() { return Files.size(); }
 

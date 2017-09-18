@@ -33,7 +33,7 @@ void Core::Dummy_Handler(const QString &FileName)
         Current.Valid = true;
 
     //UniversalAdId values
-    MetaDataList MetaData;
+    MetaDataType MetaData;
     string idregistry = Current.H->Get("com.universaladid.idregistry");
     string idvalue = Current.H->Get("com.universaladid.idvalue");
     if (Current.Valid && idregistry.empty() && idvalue.empty())
@@ -50,8 +50,7 @@ void Core::Dummy_Handler(const QString &FileName)
         }
     }
 
-    Current.CurrentRegistry=QString::fromUtf8(idregistry.c_str());
-    MetaData.insert(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));
+    MetaData = qMakePair(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));
     Current.MetaData = MetaData;
 
     //Adding it to the list
@@ -81,7 +80,7 @@ size_t Core::Open_Files(const QString &FileName)
 }
 
 //---------------------------------------------------------------------------
-MetaDataList* Core::Get_MetaData(const QString& FileName)
+MetaDataType* Core::Get_MetaData(const QString& FileName)
 {
     if(Files.contains(FileName))
         return &Files[FileName].MetaData;
@@ -97,8 +96,8 @@ bool Core::Save_File(const QString& FileName)
         FileInfo &F=Files[FileName];
         
         Ztring Registry, Value;
-        Registry.From_UTF8(F.CurrentRegistry.toUtf8().constData());
-        Value.From_UTF8(F.MetaData.value(F.CurrentRegistry).toUtf8().constData());
+        Registry.From_UTF8(F.MetaData.first.toUtf8().constData());
+        Value.From_UTF8(F.MetaData.second.toUtf8().constData());
         F.H->Set("com.universaladid.idregistry", Registry.To_Local());
         F.H->Set("com.universaladid.idvalue", Value.To_Local());
 

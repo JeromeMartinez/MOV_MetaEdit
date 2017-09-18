@@ -75,28 +75,25 @@ QValidator::State OtherValidator::validate(QString& Input, int& Pos) const
 }
 
 //---------------------------------------------------------------------------
-ComboBoxDelegate::ComboBoxDelegate(QObject* Parent, Core* C) : QItemDelegate(Parent), C(C)
+RegistryDelegate::RegistryDelegate(QObject* Parent, Core* C) : QItemDelegate(Parent), C(C)
 {
 }
 
 //---------------------------------------------------------------------------
-QWidget* ComboBoxDelegate::createEditor(QWidget* Parent,
+QWidget* RegistryDelegate::createEditor(QWidget* Parent,
                                         const QStyleOptionViewItem& Option,
                                         const QModelIndex& Index) const
 {
     Q_UNUSED(Option)
     Q_UNUSED(Index)
 
-    QComboBox* ComboBox = new QComboBox(Parent);
+    QLineEdit *Editor = new QLineEdit(Parent);
 
-    ComboBox->setEditable(true);
-    ComboBox->setInsertPolicy(QComboBox::InsertAtBottom);
-
-    return ComboBox;
+    return Editor;
 }
 
 //---------------------------------------------------------------------------
-void ComboBoxDelegate::updateEditorGeometry(QWidget* Editor,
+void RegistryDelegate::updateEditorGeometry(QWidget* Editor,
                                             const QStyleOptionViewItem& Option,
                                             const QModelIndex& Index) const
 {
@@ -106,46 +103,29 @@ void ComboBoxDelegate::updateEditorGeometry(QWidget* Editor,
 }
 
 //---------------------------------------------------------------------------
-void ComboBoxDelegate::setEditorData(QWidget* Editor, const QModelIndex& Index) const
+void RegistryDelegate::setEditorData(QWidget* Editor, const QModelIndex& Index) const
 {
-    if(!C)
-        return;
-
-    QComboBox* ComboBox = qobject_cast<QComboBox*>(Editor);
-
-    QString FileName = Index.sibling(Index.row(), FILE_COLUMN).data().toString();
-
-    MetaDataList* MetaData = C->Get_MetaData(FileName);
-
-    for(MetaDataList::const_iterator It = MetaData->begin(); It != MetaData->end(); It++)
-    {
-        QString Registry = It.key();
-        QString Value = It.value();
-
-        ComboBox->addItem(Registry, Value);
-    }
+    qobject_cast<QLineEdit*>(Editor)->setText(Index.data(Qt::EditRole).toString());
 }
 
 //---------------------------------------------------------------------------
-void ComboBoxDelegate::setModelData(QWidget* Editor,
+void RegistryDelegate::setModelData(QWidget* Editor,
                                     QAbstractItemModel* Model,
                                     const QModelIndex& Index) const
 {
     if(!C)
         return;
 
-    QComboBox* ComboBox = qobject_cast<QComboBox*>(Editor);
+    QLineEdit* LineEditor = qobject_cast<QLineEdit*>(Editor);
 
     QString FileName = Index.sibling(Index.row(), FILE_COLUMN).data().toString();
-    QString Registry = ComboBox->currentText();
+    QString Registry = LineEditor->text();
 
-    MetaDataList* MetaData = C->Get_MetaData(FileName);
+    MetaDataType* MetaData = C->Get_MetaData(FileName);
 
-    QString Value = (*MetaData)[Registry];
+    MetaData->first = Registry;
 
     Model->setData(Index, Registry);
-    Model->setData(Index.sibling(Index.row(), VALUE_COLUMN), Value);
-    (*C->Get_Files())[FileName].CurrentRegistry = Registry;
 }
 
 //---------------------------------------------------------------------------
@@ -203,16 +183,19 @@ void ItemDelegate::setModelData(QWidget* Editor,
     if(Value != OldValue)
     {
         QString FileName = Index.sibling(Index.row(), FILE_COLUMN).data(Qt::EditRole).toString();
-        QString Registry = Index.sibling(Index.row(), REGISTRY_COLUMN).data(Qt::EditRole).toString();
-        MetaDataList* MetaData = C->Get_MetaData(FileName);
+        MetaDataType* MetaData = C->Get_MetaData(FileName);
 
         if(!MetaData)
             return;
 
-        MetaData->insert(Registry, Value);
+        MetaData->second = Value;
         Model->setData(Index, Value);
 
-        (*C->Get_Files())[FileName].Modified = true;
+        if(!Value.isEmpty())
+            (*C->Get_Files())[FileName].Modified = true;
+        else
+            (*C->Get_Files())[FileName].Modified = false;
+
         emit Value_Changed(Index.row());
     }
 }
@@ -249,7 +232,7 @@ void TableWidget::Setup(Core *C)
     ItemDelegate* ItemEditor = new ItemDelegate(NULL, C);
     connect(ItemEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
 
-    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(new ComboBoxDelegate(NULL, C)));
+    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(new RegistryDelegate(NULL, C)));
     setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
 }
 
@@ -329,10 +312,10 @@ void TableWidget::Update_Table()
             OK->setFlags(OK->flags() ^ Qt::ItemIsEditable);
             if (!It->Valid)
                 OK->setToolTip(It->H->PerFile_Error.str().c_str());
-            QTableWidgetItem* Registry = new QTableWidgetItem(It->CurrentRegistry);
+            QTableWidgetItem* Registry = new QTableWidgetItem(It->MetaData.first);
             if (It->Valid)
                 Registry->setToolTip("Double-click for editing the Universal Ad-ID registry of this file.");
-            QTableWidgetItem* Value = new QTableWidgetItem(It->MetaData[It->CurrentRegistry]);
+            QTableWidgetItem* Value = new QTableWidgetItem(It->MetaData.second);
             if (It->Valid)
                 Value->setToolTip("Double-click for editing the Universal Ad-ID value of this file.\nA-Z 0-9 only.");
 

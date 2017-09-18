@@ -47,12 +47,12 @@ public:
 };
 
 //---------------------------------------------------------------------------
-class ComboBoxDelegate : public QItemDelegate
+class RegistryDelegate : public QItemDelegate
 {
     Q_OBJECT
 
 public:
-    ComboBoxDelegate(QObject* Parent = 0, Core* C = 0);
+    RegistryDelegate(QObject* Parent = 0, Core* C = 0);
 
 protected:
     QWidget* createEditor(QWidget* Parent,
