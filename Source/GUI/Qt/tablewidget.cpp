@@ -348,6 +348,8 @@ void TableWidget::Update_Table()
             if (It->Valid)
             {
                 Set_Modified(rowCount() - 1, It->Modified);
+                this->item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+                this->item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
                 Valid++;
             }
             else
