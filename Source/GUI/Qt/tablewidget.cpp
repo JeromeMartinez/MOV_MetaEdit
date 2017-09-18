@@ -288,6 +288,7 @@ void TableWidget::Set_Valid(int Row, bool Valid)
 void TableWidget::Update_Table()
 {
     size_t Valid = 0;
+    bool Modified = false;
     
     //Get opened files
     FileList* Files = C->Get_Files();
@@ -309,6 +310,9 @@ void TableWidget::Update_Table()
         //Display modified entries in bold
         Set_Valid(Row, Files->value(Entry).Valid);
         Set_Modified(Row, Files->value(Entry).Modified);
+
+        if(Files->value(Entry).Modified)
+            Modified = true;
 
         if (Files->value(Entry).Valid)
             Valid++;
@@ -338,9 +342,14 @@ void TableWidget::Update_Table()
             setItem(rowCount() - 1, 2, Registry);
             setItem(rowCount() - 1, 3, Value);
 
+            if(It->Modified)
+                Modified = true;
+
             if (It->Valid)
             {
                 Set_Modified(rowCount() - 1, It->Modified);
+                this->item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+                this->item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
                 Valid++;
             }
             else
@@ -352,6 +361,8 @@ void TableWidget::Update_Table()
         setStatusTip(QString::number(Valid)+ " editable files found, double-click on Registry or Value cells for editing then save");
     else
         setStatusTip("Drag and drop some MOV/MP4 files");
+
+    emit Enable_Save(Modified);
 }
 
 //---------------------------------------------------------------------------
@@ -374,4 +385,5 @@ void TableWidget::resizeEvent(QResizeEvent* Event)
 void TableWidget::On_Value_Changed(int Row)
 {
     Set_Modified(Row, true);
+    emit Enable_Save(true);
 }

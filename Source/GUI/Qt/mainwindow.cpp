@@ -53,6 +53,9 @@ MainWindow::MainWindow(QWidget *Parent) : QMainWindow(Parent), Ui(new Ui::MainWi
     connect(Ui->Table_Widget, SIGNAL(customContextMenuRequested(const QPoint&)),
             this, SLOT(Show_Context_Menu(const QPoint&)));
 
+    connect(Ui->Table_Widget, SIGNAL(Enable_Save(bool)),
+            Ui->Menu_File_Save_All, SLOT(setEnabled(bool)));
+
     Ui->Table_Widget->Update_Table();
 }
 
