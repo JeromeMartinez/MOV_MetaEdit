@@ -247,6 +247,9 @@
    </property>
   </action>
   <action name="Menu_File_Save_All">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../Resource/Resource.qrc">
      <normaloff>:/Image/File_Save.png</normaloff>:/Image/File_Save.png</iconset>

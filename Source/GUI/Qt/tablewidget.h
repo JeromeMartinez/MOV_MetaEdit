@@ -118,6 +118,9 @@ public:
 protected slots:
     void On_Value_Changed(int Row);
 
+signals:
+    void Enable_Save(bool Value) const;
+
 private:
     Core* C;
 };
