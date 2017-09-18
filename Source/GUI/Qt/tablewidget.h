@@ -68,15 +68,18 @@ protected:
 
 private:
     Core* C;
+
+signals:
+    void Value_Changed(int Row) const;
 };
 
 //---------------------------------------------------------------------------
-class ItemDelegate : public QItemDelegate
+class ValueDelegate : public QItemDelegate
 {
     Q_OBJECT
 
 public:
-     ItemDelegate(QObject* Parent = 0, Core* C = 0);
+     ValueDelegate(QObject* Parent = 0, Core* C = 0);
 
 protected:
      QWidget* createEditor(QWidget* Parent,
