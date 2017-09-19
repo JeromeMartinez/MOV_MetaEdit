@@ -71,7 +71,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Universal Ad-ID editor</string>
+       <string>Universal Ad ID editor</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>

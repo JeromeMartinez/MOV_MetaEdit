@@ -47,6 +47,7 @@ void Core::Dummy_Handler(const QString &FileName)
         {
             idvalue = BaseName.toUtf8().constData();
             Current.Modified = true;
+            Current.ValueValid = true;
         }
     }
 

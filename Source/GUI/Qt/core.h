@@ -18,12 +18,14 @@ struct FileInfo
 {
     bool         Valid;
     bool         Modified;
+    bool         ValueValid;
     MetaDataType MetaData;
     mp4_Handler* H;
 
     FileInfo()
         : Valid(false)
         , Modified(false)
+        , ValueValid(false)
         , H(NULL)
     {}
 };

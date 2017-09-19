@@ -214,10 +214,40 @@ void TableWidget::Setup(Core *C)
 }
 
 //---------------------------------------------------------------------------
-void TableWidget::Set_Modified(int Row, bool Modified)
+void TableWidget::Set_Display(int Row, bool Valid, bool Modified, bool ValueValid)
 {
     if(Row > this->rowCount())
         return;
+
+    if (!Valid)
+    {
+        for (int Col = 1; Col < this->columnCount(); Col++)
+        {
+            Qt::ItemFlags Flags = this->item(Row, Col)->flags();
+            if (Flags.testFlag(Qt::ItemIsEnabled))
+                Flags &= ~Qt::ItemIsEnabled;
+            if (Flags.testFlag(Qt::ItemIsSelectable))
+                Flags &= ~Qt::ItemIsSelectable;
+            item(Row, Col)->setFlags(Flags);
+        }
+        item(Row, REGISTRY_COLUMN)->setBackgroundColor(QColor(255, 63, 63, 127));
+        item(Row, VALUE_COLUMN)->setBackgroundColor(QColor(255, 63, 63, 127));
+        return;
+    }
+
+    item(Row, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+
+    if (!ValueValid)
+    {
+        for (int Col = 0; Col < this->columnCount(); Col++)
+        {
+            QFont Font = this->item(Row, Col)->font();
+            Font.setBold(false);
+            this->item(Row, Col)->setFont(Font);
+        }
+        item(Row, VALUE_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
+        return;
+    }
 
     for(int Col = 0; Col < this->columnCount(); Col++)
     {
@@ -225,32 +255,7 @@ void TableWidget::Set_Modified(int Row, bool Modified)
         Font.setBold(Modified);
         this->item(Row, Col)->setFont(Font);
     }
-
-    item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
-    item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
-}
-
-//---------------------------------------------------------------------------
-void TableWidget::Set_Valid(int Row, bool Valid)
-{
-    if (Valid || Row > this->rowCount())
-        return;
-
-    for (int Col = 1; Col < this->columnCount(); Col++)
-    {
-        Qt::ItemFlags Flags = this->item(Row, Col)->flags();
-        if(Flags.testFlag(Qt::ItemIsEnabled))
-            Flags &= ~Qt::ItemIsEnabled;
-        if(Flags.testFlag(Qt::ItemIsSelectable))
-            Flags &= ~Qt::ItemIsSelectable;
-        this->item(Row, Col)->setFlags(Flags);
-    }
-
-    if (!Valid)
-    {
-        item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
-        item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
-    }
+    item(Row, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
 }
 
 //---------------------------------------------------------------------------
@@ -277,8 +282,7 @@ void TableWidget::Update_Table()
 
         Entries.append(Entry);
         //Display modified entries in bold
-        Set_Valid(Row, Files->value(Entry).Valid);
-        Set_Modified(Row, Files->value(Entry).Modified);
+        Set_Display(Row, Files->value(Entry).Valid, Files->value(Entry).Modified, Files->value(Entry).ValueValid);
 
         if(Files->value(Entry).Modified)
             Modified = true;
@@ -299,9 +303,9 @@ void TableWidget::Update_Table()
             if (It->Valid)
             {
                 Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first : QString::fromUtf8("(Parsing error)"));
-                Registry->setToolTip("Double-click for editing the Universal Ad-ID registry of this file.");
+                Registry->setToolTip("Double-click for editing the Universal Ad ID registry of this file.");
                 Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
-                Value->setToolTip("Double-click for editing the Universal Ad-ID value of this file.\nA-Z 0-9 only.");
+                Value->setToolTip("Double-click for editing the Universal Ad ID value of this file.\nA-Z 0-9 only.");
             }
             else
             {
@@ -318,14 +322,9 @@ void TableWidget::Update_Table()
                 Modified = true;
 
             if (It->Valid)
-            {
-                Set_Modified(rowCount() - 1, It->Modified);
                 Valid++;
-            }
-            else
-            {
-                Set_Valid(rowCount() - 1, false);
-            }
+
+            Set_Display(rowCount() - 1, It->Valid, It->Modified, It->ValueValid);
         }
     }
 
@@ -377,10 +376,8 @@ void TableWidget::On_Value_Changed(int Row)
         int Pos = 0;
         QValidator::State State = Registry=="ad-id.org"?AdIdValidator().validate(Value, Pos):OtherValidator().validate(Value, Pos);
 
-        if(State == QValidator::Acceptable)
-            (*C->Get_Files())[FileName].Modified = true;
-        else
-            item(Row, VALUE_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
+        (*C->Get_Files())[FileName].Modified = State == QValidator::Acceptable;
+        (*C->Get_Files())[FileName].ValueValid = State == QValidator::Acceptable;
     }
 
     Update_Table();

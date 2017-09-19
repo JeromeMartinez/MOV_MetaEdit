@@ -112,8 +112,7 @@ public:
     TableWidget(QWidget* Parent);
 
     void Setup(Core* C);
-    void Set_Valid(int Row, bool Valid = true);
-    void Set_Modified(int Row, bool Modified = true);
+    void Set_Display(int Row, bool Valid, bool Modified, bool ValueValid);
     void Update_Table();
 
     void resizeEvent(QResizeEvent* Event);
