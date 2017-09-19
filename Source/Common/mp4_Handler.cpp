@@ -20,87 +20,6 @@ const string mp4_Handler_EmptyZtring_Const; //Use it when we can't return a refe
 //---------------------------------------------------------------------------
 
 //***************************************************************************
-// Const
-//***************************************************************************
-
-enum xxxx_Fields
-{
-    Fields_Tech,
-    Fields_Bext,
-    Fields_Info,
-    Fields_Max,
-};
-
-size_t xxxx_Strings_Size[]=
-{
-    4,  //Tech
-    15,  //Bext
-    17, //Info
-};
-
-const char* xxxx_Strings[][17]=
-{
-    {
-        "XMP",
-        "aXML",
-        "iXML",
-        "MD5Stored",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-    },
-    {
-        "Description",
-        "Originator",
-        "OriginatorReference",
-        "OriginationDate",
-        "OriginationTime",
-        "TimeReference (translated)",
-        "TimeReference",
-        "BextVersion",
-        "UMID",
-        "LoudnessValue",
-        "LoudnessRange",
-        "MaxTruePeakLevel",
-        "MaxMomentaryLoudness",
-        "MaxShortTermLoudness",
-        "CodingHistory",
-        "",
-        "",
-    },
-    {
-        //Note: there is a duplicate in mp4_Chunks_INFO_xxxx
-        "IARL", //Archival Location
-        "IART", //Artist
-        "ICMS", //Commissioned
-        "ICMT", //Comment
-        "ICOP", //Copyright
-        "ICRD", //Date Created
-        "IENG", //Engineer
-        "IGNR", //Genre
-        "IKEY", //Keywords
-        "IMED", //Medium
-        "INAM", //Title
-        "IPRD", //Product
-        "ISBJ", //Subject
-        "ISFT", //Software
-        "ISRC", //Source
-        "ISRF", //Source Form
-        "ITCH", //Technician
-    },
-};
-
-//***************************************************************************
 // Constructor/Destructor
 //***************************************************************************
 
@@ -144,7 +63,7 @@ bool mp4_Handler::Open(const string &FileName)
     if (!File::Exists(Chunks->Global->File_Name) || !Chunks->Global->In.Open(Chunks->Global->File_Name))
     {
         Errors<<FileName<<": File does not exist"<<endl;
-        PerFile_Error<<"File does not exist"<<endl;
+        PerFile_Error<<"File does not exist";
         return false;
     }
     Chunks->Global->File_Size=Chunks->Global->In.Size_Get();
@@ -154,6 +73,7 @@ bool mp4_Handler::Open(const string &FileName)
 
     //Base
     mp4_Base::block Chunk;
+    Chunk.Header.Size=16;
     Chunk.Content.Size=Chunks->Global->File_Size;
     Options_Update();
 
@@ -173,12 +93,12 @@ bool mp4_Handler::Open(const string &FileName)
     catch (exception_read_block &e)
     {
         Errors<<Chunks->Global->File_Name.To_Local()<<": "<<(Chunk.Header.Name?(Ztring().From_CC4(Chunk.Header.Name).To_Local()+" "):string())<<" "<<e.what()<<endl;
-        PerFile_Error<<(Chunk.Header.Name?(Ztring().From_CC4(Chunk.Header.Name).To_Local()+" "):string())<<e.what()<<endl;
+        PerFile_Error<<(Chunk.Header.Name?(Ztring().From_CC4(Chunk.Header.Name).To_Local()+" "):string())<<e.what();
     }
     catch (exception &e)
     {
         Errors<<Chunks->Global->File_Name.To_Local() <<": "<<e.what()<<endl;
-        PerFile_Error<<e.what()<<endl;
+        PerFile_Error<<e.what();
         ReturnValue=false;
     }
 
@@ -205,7 +125,7 @@ bool mp4_Handler::Save()
     if (Chunks==NULL)
     {
         Errors<<"(No file name): Internal error"<<endl;
-        PerFile_Error << "Internal error" << endl;
+        PerFile_Error << "Internal error";
         return false;
     }
 
@@ -233,7 +153,7 @@ bool mp4_Handler::Save()
     if (!Chunks->Global->In.Open(Chunks->Global->File_Name))
     {
         Errors<<Chunks->Global->File_Name.To_Local()<<": File does not exist anymore"<<endl;
-        PerFile_Error<<"File does not exist anymore"<<endl;
+        PerFile_Error<<"File does not exist anymore";
         return false;
     }
 
@@ -241,7 +161,7 @@ bool mp4_Handler::Save()
     if (File::Exists(Chunks->Global->File_Name+__T(".tmp")) && !File::Delete(Chunks->Global->File_Name+__T(".tmp")))
     {
         Errors<<Chunks->Global->File_Name.To_Local()<<": Old temporary file can't be deleted"<<endl;
-        PerFile_Error<<"Old temporary file can't be deleted"<<endl;
+        PerFile_Error<<"Old temporary file can't be deleted";
         return false;
     }
     
@@ -262,7 +182,7 @@ bool mp4_Handler::Save()
     catch (exception &e)
     {
         Errors<<Chunks->Global->File_Name.To_Local() <<": "<<e.what()<<endl;
-        PerFile_Error << e.what() << endl;
+        PerFile_Error << e.what();
         return false;
     }
 
@@ -308,7 +228,7 @@ bool mp4_Handler::Set(const string &Field, const string &Value)
     if (Chunks==NULL)
     {
         Errors<<"(No file name): Internal error"<<endl;
-        PerFile_Error << "Internal error" << endl;
+        PerFile_Error << "Internal error";
         return false;
     }
 
@@ -330,7 +250,7 @@ bool mp4_Handler::Remove(const string &Field)
     if (Chunks==NULL)
     {
         Errors<<"(No file name): Internal error"<<endl;
-        PerFile_Error << "Internal error" << endl;
+        PerFile_Error << "Internal error";
         return false;
     }
 
@@ -353,7 +273,7 @@ bool mp4_Handler::IsValid(const string &Field_, const string &Value_)
     if (!IsValid_Errors.str().empty())
     {
         Errors<<(Chunks?Chunks->Global->File_Name.To_Local():"")<<": "<<IsValid_Errors.str()<<endl;
-        PerFile_Error << IsValid_Errors.str() << endl;
+        PerFile_Error << IsValid_Errors.str();
         return false;
     }
     else
@@ -445,17 +365,6 @@ void mp4_Handler::Cancel()
 bool mp4_Handler::IsModified_Get()
 {
     return true;
-
-    bool ToReturn=false;
-    for (size_t Fields_Pos=0; Fields_Pos<Fields_Max; Fields_Pos++)
-        for (size_t Pos=0; Pos<xxxx_Strings_Size[Fields_Pos]; Pos++)
-            if (IsModified(xxxx_Strings[Fields_Pos][Pos]))
-                ToReturn=true;
-
-    if (!ToReturn && Chunks)
-        ToReturn=Chunks->IsModified();
-
-    return ToReturn;
 }
 
 //---------------------------------------------------------------------------
@@ -492,7 +401,7 @@ bool mp4_Handler::Set(const string &Field, const string &Value, mp4_Base::global
     if (Overwrite_Reject && Chunk_Strings!=NULL && !Chunk_Strings->Strings[Field].empty())
     {
         Errors<<(Chunks?Chunks->Global->File_Name.To_Local():"")<<": overwriting is not authorized ("<<Field<<")"<<endl;
-        PerFile_Error << "Overwriting is not authorized (" << Field << ")" << endl;
+        PerFile_Error << "Overwriting is not authorized (" << Field << ")";
         return false;
     }
 

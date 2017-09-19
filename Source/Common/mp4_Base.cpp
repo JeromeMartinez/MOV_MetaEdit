@@ -42,9 +42,8 @@ mp4_Base::~mp4_Base ()
 void mp4_Base::Read (block &Chunk_In)
 {
     //Configuring block data
-    Chunk.Header.List=Chunk_In.Header.List;
     Chunk.Header.Name=Chunk_In.Header.Name;
-    Chunk.Header.Size=Chunk.Header.List==0x00000000?8:12;
+    Chunk.Header.Size= Chunk_In.Header.Size;
     Chunk.Content.Size=Chunk_In.Content.Size;
     Chunk.File_In_Position=Global->In.Position_Get()-Chunk.Header.Size;
 
@@ -164,9 +163,6 @@ bool mp4_Base::Read_Header (block &NewChunk)
         throw exception_read();
     NewChunk.Header.Name = CC4(Temp);
 
-    NewChunk.Header.List = 0x00000000;
-    NewChunk.Header.Size = 8;
-
     if (NewChunk.Content.Size == 1)
     {
         //64-bit size
@@ -176,10 +172,9 @@ bool mp4_Base::Read_Header (block &NewChunk)
             throw exception_read();
         NewChunk.Content.Size = BigEndian2int64u(Temp);
         NewChunk.Header.Size = 16;
-
-        //TEMP
-        throw exception_read_block("Big files currently not supported");
     }
+    else
+        NewChunk.Header.Size = 8;
 
     NewChunk.Content.Size -= NewChunk.Header.Size;
 
@@ -290,15 +285,21 @@ void mp4_Base::Write ()
     {
         //Calculating block size
         int64u Block_Size=Block_Size_Get();
-        if (Block_Size>0xFFFFFFFF)
+        if (Block_Size>0xFFFFFFF || Chunk.Header.Size == 16)
         {
-            throw exception_write("big");
+            int8u Header[16];
+            int32u2BigEndian(Header, 1);
+            int32u2BigEndian(Header + 4, Chunk.Header.Name);
+            int64u2BigEndian(Header + 8, Block_Size);
+            Write_Internal(Header, 16);
         }
-
-        int8u Header[8];
-        int32u2BigEndian(Header, (int32u)Block_Size);
-        int32u2BigEndian(Header+4, Chunk.Header.Name);
-        Write_Internal(Header, 8);
+        else
+        {
+            int8u Header[8];
+            int32u2BigEndian(Header, (int32u)Block_Size);
+            int32u2BigEndian(Header+4, Chunk.Header.Name);
+            Write_Internal(Header, 8);
+        }
     }
     else if (!IsModified())
         return; //Nothing to do if the file is not modifed (Level 0)
@@ -588,7 +589,11 @@ void mp4_Base::Write_Internal_Subs ()
 int64u mp4_Base::Block_Size_Get ()
 {
     if (!Chunk.Content.Size_IsModified || Subs.empty())
-        return 8+Chunk.Content.Size;
+    {
+        if (!Chunk.Header.Size)
+            Chunk.Header.Size = ((Chunk.Header.Size + Chunk.Content.Size) <= 0xFFFFFFFF ? 8 : 16);
+        return Chunk.Header.Size + Chunk.Content.Size;
+    }
     
     //Parsing subs
     int64u Size=0;
@@ -650,7 +655,10 @@ int64u mp4_Base::Block_Size_Get ()
         }
         Size+=Subs[Pos]->Block_Size_Get();
     }
-    return (Chunk.Header.List==0x00000000?8:12)+Size;
+
+    if (!Chunk.Header.Size)
+        Chunk.Header.Size = ((Chunk.Header.Size + Chunk.Content.Size) <= 0xFFFFFFFF ? 8 : 16);
+    return Chunk.Header.Size+Size;
 }
 
 //---------------------------------------------------------------------------

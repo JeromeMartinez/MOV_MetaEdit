@@ -15,10 +15,9 @@
 // Info
 //***************************************************************************
 
-static const int ColumnSize[4] =
+static const int ColumnSize[MAX_COLUMN] =
 {
-    55,
-     5,
+    60,
     20,
     20,
 };
@@ -199,10 +198,9 @@ void TableWidget::Setup(Core *C)
     QStringList Header_Labels;
 
     Header_Labels.append("File Name");
-    Header_Labels.append("OK?");
     Header_Labels.append("Registry");
     Header_Labels.append("Value");
-    setColumnCount(4);
+    setColumnCount(MAX_COLUMN);
     setHorizontalHeaderLabels(Header_Labels);
 #if QT_VERSION < 0x050000
     horizontalHeader()->setResizeMode(QHeaderView::Interactive);
@@ -232,6 +230,9 @@ void TableWidget::Set_Modified(int Row, bool Modified)
         Font.setBold(Modified);
         this->item(Row, Col)->setFont(Font);
     }
+
+    item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+    item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
 }
 
 //---------------------------------------------------------------------------
@@ -240,7 +241,7 @@ void TableWidget::Set_Valid(int Row, bool Valid)
     if (Valid || Row > this->rowCount())
         return;
 
-    for (int Col = 0; Col < this->columnCount(); Col++)
+    for (int Col = 1; Col < this->columnCount(); Col++)
     {
         Qt::ItemFlags Flags = this->item(Row, Col)->flags();
         if(Flags.testFlag(Qt::ItemIsEnabled))
@@ -248,6 +249,12 @@ void TableWidget::Set_Valid(int Row, bool Valid)
         if(Flags.testFlag(Qt::ItemIsSelectable))
             Flags &= ~Qt::ItemIsSelectable;
         this->item(Row, Col)->setFlags(Flags);
+    }
+
+    if (!Valid)
+    {
+        item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
+        item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
     }
 }
 
@@ -264,7 +271,7 @@ void TableWidget::Update_Table()
     QStringList Entries;
     for(int Row = rowCount() - 1; Row >= 0; Row--)
     {
-        QString Entry = item(Row, 0)->data(Qt::DisplayRole).toString();
+        QString Entry = item(Row, FILE_COLUMN)->data(Qt::DisplayRole).toString();
 
         if(Files->find(Entry) == Files->end())
         {
@@ -292,20 +299,23 @@ void TableWidget::Update_Table()
         {
             QTableWidgetItem* Name = new QTableWidgetItem(It.key());
             Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
-            QTableWidgetItem* OK = new QTableWidgetItem(It->Valid ? "Yes" : QString ("No: ")+It->H->PerFile_Error.str().c_str());
-            OK->setFlags(OK->flags() ^ Qt::ItemIsEditable);
-            if (!It->Valid)
-                OK->setToolTip(It->H->PerFile_Error.str().c_str());
-            QTableWidgetItem* Registry = new QTableWidgetItem(It->MetaData.first);
+            QTableWidgetItem* Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first  :QString::fromUtf8("(Parsing error)"));
+            QTableWidgetItem* Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
             if (It->Valid)
+            {
+                Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first : QString::fromUtf8("(Parsing error)"));
                 Registry->setToolTip("Double-click for editing the Universal Ad-ID registry of this file.");
-            QTableWidgetItem* Value = new QTableWidgetItem(It->MetaData.second);
-            if (It->Valid)
+                Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
                 Value->setToolTip("Double-click for editing the Universal Ad-ID value of this file.\nA-Z 0-9 only.");
+            }
+            else
+            {
+                Registry = new QTableWidgetItem("(Parsing error)");
+                Value = new QTableWidgetItem(It->H->PerFile_Error.str().c_str());
+            }
 
             insertRow(rowCount());
             setItem(rowCount() - 1, FILE_COLUMN, Name);
-            setItem(rowCount() - 1, OK_COLUMN, OK);
             setItem(rowCount() - 1, REGISTRY_COLUMN, Registry);
             setItem(rowCount() - 1, VALUE_COLUMN, Value);
 
@@ -315,12 +325,12 @@ void TableWidget::Update_Table()
             if (It->Valid)
             {
                 Set_Modified(rowCount() - 1, It->Modified);
-                item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
-                item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
                 Valid++;
             }
             else
+            {
                 Set_Valid(rowCount() - 1, false);
+            }
         }
     }
 

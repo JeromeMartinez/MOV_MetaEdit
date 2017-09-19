@@ -217,14 +217,12 @@ public:
         {
             size_t  Level;
             int8u   Size;
-            int32u  List; //If header is 12 byte long
             int32u  Name;
             
             header()
             {
                 Level=0;
                 Size=0;
-                List=0x00000000;
                 Name=0x00000000;
             }
         };

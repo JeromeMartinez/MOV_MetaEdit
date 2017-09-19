@@ -22,10 +22,10 @@
 
 enum COLUMNS
 {
-    FILE_COLUMN = 0,
-    OK_COLUMN = 1,
-    REGISTRY_COLUMN = 2,
-    VALUE_COLUMN = 3
+    FILE_COLUMN,
+    REGISTRY_COLUMN,
+    VALUE_COLUMN,
+    MAX_COLUMN,
 };
 
 //---------------------------------------------------------------------------
