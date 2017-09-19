@@ -138,11 +138,6 @@ QWidget* ValueDelegate::createEditor(QWidget* Parent,
 
     QLineEdit *Editor = new QLineEdit(Parent);
 
-    if(Index.sibling(Index.row(), REGISTRY_COLUMN).data(Qt::EditRole).toString() == "ad-id.org")
-        Editor->setValidator(new AdIdValidator);
-    else
-        Editor->setValidator(new OtherValidator);
-
     return Editor;
 }
 
@@ -214,8 +209,8 @@ void TableWidget::Setup(Core *C)
     RegistryDelegate* RegistryEditor = new RegistryDelegate(NULL, C);
     connect(RegistryEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
 
-    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(RegistryEditor));
-    setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ValueEditor));
+    setItemDelegateForColumn(REGISTRY_COLUMN, qobject_cast<QAbstractItemDelegate*>(RegistryEditor));
+    setItemDelegateForColumn(VALUE_COLUMN, qobject_cast<QAbstractItemDelegate*>(ValueEditor));
 }
 
 //---------------------------------------------------------------------------
@@ -373,17 +368,20 @@ void TableWidget::On_Value_Changed(int Row)
         if(!MetaData)
             return;
 
+    (*C->Get_Files())[FileName].Modified = false;
     MetaData->first = Registry;
     MetaData->second = Value;
 
-    if(!Registry.isEmpty() && (Registry != "ad-id.org" || !Value.isEmpty()) )
+    if(!Registry.isEmpty())
     {
-        (*C->Get_Files())[FileName].Modified = true;
-        Update_Table();
+        int Pos = 0;
+        QValidator::State State = Registry=="ad-id.org"?AdIdValidator().validate(Value, Pos):OtherValidator().validate(Value, Pos);
+
+        if(State == QValidator::Acceptable)
+            (*C->Get_Files())[FileName].Modified = true;
+        else
+            item(Row, VALUE_COLUMN)->setBackgroundColor(QColor(230, 173, 173, 127));
     }
-    else
-    {
-        (*C->Get_Files())[FileName].Modified = false;
-        Update_Table();
-    }
+
+    Update_Table();
 }
