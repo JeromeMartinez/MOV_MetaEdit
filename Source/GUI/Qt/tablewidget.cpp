@@ -113,28 +113,25 @@ void RegistryDelegate::setModelData(QWidget* Editor,
                                     QAbstractItemModel* Model,
                                     const QModelIndex& Index) const
 {
-    if(!C)
-        return;
-
     QLineEdit* LineEditor = qobject_cast<QLineEdit*>(Editor);
 
-    QString FileName = Index.sibling(Index.row(), FILE_COLUMN).data().toString();
-    QString Registry = LineEditor->text();
+    QString OldValue = Model->data(Index, Qt::EditRole).toString();
+    QString Value = LineEditor->text();
 
-    MetaDataType* MetaData = C->Get_MetaData(FileName);
-
-    MetaData->first = Registry;
-
-    Model->setData(Index, Registry);
+    if(Value != OldValue)
+    {
+        Model->setData(Index, Value);
+        emit Value_Changed(Index.row());
+    }
 }
 
 //---------------------------------------------------------------------------
-ItemDelegate::ItemDelegate(QObject* Parent, Core* C) : QItemDelegate(Parent), C(C)
+ValueDelegate::ValueDelegate(QObject* Parent, Core* C) : QItemDelegate(Parent), C(C)
 {
 }
 
 //---------------------------------------------------------------------------
-QWidget* ItemDelegate::createEditor(QWidget* Parent,
+QWidget* ValueDelegate::createEditor(QWidget* Parent,
                                     const QStyleOptionViewItem& Option,
                                     const QModelIndex& Index) const
 {
@@ -151,7 +148,7 @@ QWidget* ItemDelegate::createEditor(QWidget* Parent,
 }
 
 //---------------------------------------------------------------------------
-void ItemDelegate::updateEditorGeometry(QWidget* Editor,
+void ValueDelegate::updateEditorGeometry(QWidget* Editor,
                                         const QStyleOptionViewItem& Option,
                                         const QModelIndex& Index) const
 {
@@ -162,19 +159,16 @@ void ItemDelegate::updateEditorGeometry(QWidget* Editor,
 
 
 //---------------------------------------------------------------------------
-void ItemDelegate::setEditorData(QWidget *Editor, const QModelIndex& Index) const
+void ValueDelegate::setEditorData(QWidget *Editor, const QModelIndex& Index) const
 {
     qobject_cast<QLineEdit*>(Editor)->setText(Index.data(Qt::EditRole).toString());
 }
 
 //---------------------------------------------------------------------------
-void ItemDelegate::setModelData(QWidget* Editor,
+void ValueDelegate::setModelData(QWidget* Editor,
                                 QAbstractItemModel* Model,
                                 const QModelIndex& Index) const
 {
-    if(!C)
-        return;
-
     QLineEdit* LineEditor = qobject_cast<QLineEdit*>(Editor);
 
     QString OldValue = Model->data(Index, Qt::EditRole).toString();
@@ -182,20 +176,7 @@ void ItemDelegate::setModelData(QWidget* Editor,
 
     if(Value != OldValue)
     {
-        QString FileName = Index.sibling(Index.row(), FILE_COLUMN).data(Qt::EditRole).toString();
-        MetaDataType* MetaData = C->Get_MetaData(FileName);
-
-        if(!MetaData)
-            return;
-
-        MetaData->second = Value;
         Model->setData(Index, Value);
-
-        if(!Value.isEmpty())
-            (*C->Get_Files())[FileName].Modified = true;
-        else
-            (*C->Get_Files())[FileName].Modified = false;
-
         emit Value_Changed(Index.row());
     }
 }
@@ -229,11 +210,14 @@ void TableWidget::Setup(Core *C)
     horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 #endif
 
-    ItemDelegate* ItemEditor = new ItemDelegate(NULL, C);
-    connect(ItemEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
+    ValueDelegate* ValueEditor = new ValueDelegate(NULL, C);
+    connect(ValueEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
 
-    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(new RegistryDelegate(NULL, C)));
-    setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ItemEditor));
+    RegistryDelegate* RegistryEditor = new RegistryDelegate(NULL, C);
+    connect(RegistryEditor, SIGNAL(Value_Changed(int)), this, SLOT(On_Value_Changed(int)));
+
+    setItemDelegateForColumn(2, qobject_cast<QAbstractItemDelegate*>(RegistryEditor));
+    setItemDelegateForColumn(3, qobject_cast<QAbstractItemDelegate*>(ValueEditor));
 }
 
 //---------------------------------------------------------------------------
@@ -320,10 +304,10 @@ void TableWidget::Update_Table()
                 Value->setToolTip("Double-click for editing the Universal Ad-ID value of this file.\nA-Z 0-9 only.");
 
             insertRow(rowCount());
-            setItem(rowCount() - 1, 0, Name);
-            setItem(rowCount() - 1, 1, OK);
-            setItem(rowCount() - 1, 2, Registry);
-            setItem(rowCount() - 1, 3, Value);
+            setItem(rowCount() - 1, FILE_COLUMN, Name);
+            setItem(rowCount() - 1, OK_COLUMN, OK);
+            setItem(rowCount() - 1, REGISTRY_COLUMN, Registry);
+            setItem(rowCount() - 1, VALUE_COLUMN, Value);
 
             if(It->Modified)
                 Modified = true;
@@ -331,8 +315,8 @@ void TableWidget::Update_Table()
             if (It->Valid)
             {
                 Set_Modified(rowCount() - 1, It->Modified);
-                this->item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
-                this->item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+                item(rowCount() - 1, REGISTRY_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
+                item(rowCount() - 1, VALUE_COLUMN)->setBackgroundColor(QColor(173, 216, 230, 127));
                 Valid++;
             }
             else
@@ -367,6 +351,29 @@ void TableWidget::resizeEvent(QResizeEvent* Event)
 //---------------------------------------------------------------------------
 void TableWidget::On_Value_Changed(int Row)
 {
-    Set_Modified(Row, true);
-    emit Enable_Save(true);
+    if(!C)
+        return;
+
+    QString FileName = item(Row, FILE_COLUMN)->data(Qt::EditRole).toString();
+    QString Registry = item(Row, REGISTRY_COLUMN)->data(Qt::EditRole).toString();
+    QString Value = item(Row, VALUE_COLUMN)->data(Qt::EditRole).toString();
+
+    MetaDataType* MetaData = C->Get_MetaData(FileName);
+
+        if(!MetaData)
+            return;
+
+    MetaData->first = Registry;
+    MetaData->second = Value;
+
+    if(!Registry.isEmpty() && (Registry != "ad-id.org" || !Value.isEmpty()) )
+    {
+        (*C->Get_Files())[FileName].Modified = true;
+        Update_Table();
+    }
+    else
+    {
+        (*C->Get_Files())[FileName].Modified = false;
+        Update_Table();
+    }
 }
