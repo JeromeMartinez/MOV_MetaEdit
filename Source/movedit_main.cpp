@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <stdint.h>
 #include "ZenLib/Dir.h"
 #include "ZenLib/File.h"
 #include "CLI/Help.h"

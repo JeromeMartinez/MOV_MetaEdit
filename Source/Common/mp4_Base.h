@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <stdint.h>
 using namespace ZenLib;
 using namespace std;
 //---------------------------------------------------------------------------
