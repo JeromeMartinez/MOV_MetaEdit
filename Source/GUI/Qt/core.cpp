@@ -22,7 +22,7 @@ Core::Core()
 }
 
 //---------------------------------------------------------------------------
-FileInfo Core::Read_Data(const QString &FileName)
+FileInfo Core::Read_Data(const QString &FileName, bool CheckFileName)
 {
     FileInfo Current;
 
@@ -33,39 +33,44 @@ FileInfo Core::Read_Data(const QString &FileName)
         Current.Valid = true;
 
     //UniversalAdId values
-    MetaDataType MetaData;
     string idregistry = Current.H->Get("com.universaladid.idregistry");
     string idvalue = Current.H->Get("com.universaladid.idvalue");
-    if (Current.Valid && idregistry.empty() && idvalue.empty())
-    {
-        idregistry = "ad-id.org";
+    Current.Previous = qMakePair(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));;
 
-        //Trying from file name
-        QString BaseName = QFileInfo(FileName).baseName();
-        int Pos = 0;
-        if (AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
+    if (Current.Valid)
+    {
+        if (CheckFileName && idregistry.empty() && idvalue.empty())
         {
-            idvalue = BaseName.toUtf8().constData();
-            Current.Modified = true;
-            Current.ValueValid = true;
+            idregistry = "ad-id.org";
+
+            //Trying from file name
+            QString BaseName = QFileInfo(FileName).baseName();
+            int Pos = 0;
+            if (AdIdValidator().validate(BaseName, Pos) == QValidator::Acceptable)
+            {
+                idvalue = BaseName.toUtf8().constData();
+                Current.Modified = true;
+                Current.ValueValid = true;
+            }
+        }
+        else
+        {
+            QString Value = QString::fromUtf8(idvalue.c_str());
+            QValidator::State State = QValidator::Invalid;
+            int Pos = 0;
+            if (idregistry == "ad-id.org")
+                State = AdIdValidator().validate(Value, Pos);
+            else if (idregistry.empty())
+                State = NoneValidator().validate(Value, Pos);
+            else
+                State = OtherValidator().validate(Value, Pos);
+
+            if (State == QValidator::Acceptable)
+                Current.ValueValid = true;
         }
     }
-    else if(Current.Valid && !idvalue.empty())
-    {
-        QString Value = QString::fromUtf8(idvalue.c_str());
-        QValidator::State State = QValidator::Invalid;
-        int Pos = 0;
-        if(idregistry == "ad-id.org")
-            State = AdIdValidator().validate(Value, Pos);
-        else
-            State = OtherValidator().validate(Value, Pos);
 
-        if (State == QValidator::Acceptable)
-            Current.ValueValid = true;
-    }
-
-    MetaData = qMakePair(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));
-    Current.MetaData = MetaData;
+    Current.MetaData = qMakePair(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));;
 
     return Current;
 }
@@ -74,7 +79,7 @@ FileInfo Core::Read_Data(const QString &FileName)
 void Core::Add_File(const QString &FileName)
 {
     //Adding file to the list
-    Files.insert(FileName, Read_Data(FileName));
+    Files.insert(FileName, Read_Data(FileName, true));
 }
 
 //---------------------------------------------------------------------------
@@ -114,7 +119,7 @@ bool Core::Save_File(const QString& FileName)
     if (Files.contains(FileName))
     {
         FileInfo &F=Files[FileName];
-        
+
         Ztring Registry, Value;
         Registry.From_UTF8(F.MetaData.first.toUtf8().constData());
         Value.From_UTF8(F.MetaData.second.toUtf8().constData());

@@ -113,11 +113,15 @@ public:
             size_t data_Pos;
             size_t data_Size;
             string ToBeReplacedBy;
+            bool   ToBeReplacedBy_Modified;
 
             block_moov_meta_list()
                 : size(0)
                 , name(0)
                 , value(NULL)
+                , data_Pos(0)
+                , data_Size(0)
+                , ToBeReplacedBy_Modified(false)
             {}
 
             block_moov_meta_list(int32u size_, int32u name_, int8u* value_)
@@ -126,6 +130,7 @@ public:
                 , value(value_)
                 , data_Pos(0)
                 , data_Size(0)
+                , ToBeReplacedBy_Modified(false)
             {}
 
             block_moov_meta_list(int32u size_, int32u name_, int8u* value_, size_t data_Pos_, size_t data_Size_)

@@ -105,7 +105,7 @@ void mp4_moov_meta_ilst::Modify_Internal()
         {
             global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
             Chunk.Content.Size+=Item.size;
-            if (Item.data_Size && Item.ToBeReplacedBy.size())
+            if (Item.data_Size && Item.ToBeReplacedBy_Modified)
             {
                 Chunk.Content.Size-=Item.data_Size-16;
                 Chunk.Content.Size+=Item.ToBeReplacedBy.size();
@@ -122,7 +122,7 @@ void mp4_moov_meta_ilst::Modify_Internal()
         for (size_t i=0; i<Global->moov_meta_ilst->Items.size(); i++)
         {
             global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
-            if (Item.data_Size && Item.ToBeReplacedBy.size())
+            if (Item.data_Size && Item.ToBeReplacedBy_Modified)
             {
                 Put_B4((int32u)(Item.size-(Item.data_Size-16)+Item.ToBeReplacedBy.size()));
                 Put_B4((int32u)(Item.name));
@@ -142,6 +142,7 @@ void mp4_moov_meta_ilst::Modify_Internal()
                     Chunk.Content.Buffer_Offset+=Item.size-8-(Item.data_Pos+Item.data_Size);
                 }
                 Item.ToBeReplacedBy.clear();
+                Item.ToBeReplacedBy_Modified=false;
             }
             else
             {

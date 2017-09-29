@@ -70,8 +70,24 @@ QValidator::State OtherValidator::validate(QString& Input, int& Pos) const
     if(Input.size() > 255)
         return QValidator::Invalid;
 
-    if(Input.size() < 0)
+    if(Input.isEmpty())
         return QValidator::Intermediate;
+
+    return QValidator::Acceptable;
+}
+
+//---------------------------------------------------------------------------
+NoneValidator::NoneValidator(QObject* Parent) : QValidator(Parent)
+{
+}
+
+//---------------------------------------------------------------------------
+QValidator::State NoneValidator::validate(QString& Input, int& Pos) const
+{
+    Q_UNUSED(Pos)
+
+    if(!Input.isEmpty())
+        return QValidator::Invalid;
 
     return QValidator::Acceptable;
 }
@@ -305,13 +321,13 @@ void TableWidget::Update_Table()
 
         QTableWidgetItem* Name = new QTableWidgetItem(It.key());
         Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
-        QTableWidgetItem* Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first  :QString::fromUtf8("(Parsing error)"));
-        QTableWidgetItem* Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
+        QTableWidgetItem* Registry;
+        QTableWidgetItem* Value;
         if (It->Valid)
         {
-            Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first : QString::fromUtf8("(Parsing error)"));
+            Registry = new QTableWidgetItem(It->MetaData.first);
             Registry->setToolTip("Double-click for editing the Universal Ad ID registry of this file.");
-            Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
+            Value = new QTableWidgetItem(It->MetaData.second);
             Value->setToolTip("Double-click for editing the Universal Ad ID value of this file.\nA-Z 0-9 only.");
         }
         else
@@ -324,7 +340,7 @@ void TableWidget::Update_Table()
         setItem(Row, REGISTRY_COLUMN, Registry);
         setItem(Row, VALUE_COLUMN, Value);
 
-        if (It->Modified)
+        if (It->Modified && It->ValueValid)
             Modified = true;
 
         if (It->Valid)
@@ -376,14 +392,17 @@ void TableWidget::On_Value_Changed(int Row)
     MetaData->first = Registry;
     MetaData->second = Value;
 
-    if(!Registry.isEmpty())
-    {
-        int Pos = 0;
-        QValidator::State State = Registry=="ad-id.org"?AdIdValidator().validate(Value, Pos):OtherValidator().validate(Value, Pos);
+    QValidator::State State = QValidator::Invalid;
+    int Pos = 0;
+    if (Registry == "ad-id.org")
+        State = AdIdValidator().validate(Value, Pos);
+    else if (Registry.isEmpty())
+        State = NoneValidator().validate(Value, Pos);
+    else
+        State = OtherValidator().validate(Value, Pos);
 
-        (*C->Get_Files())[FileName].Modified = State == QValidator::Acceptable;
-        (*C->Get_Files())[FileName].ValueValid = State == QValidator::Acceptable;
-    }
+    (*C->Get_Files())[FileName].Modified = *MetaData != (*C->Get_Files())[FileName].Previous;
+    (*C->Get_Files())[FileName].ValueValid = State == QValidator::Acceptable;
 
     Update_Table();
 }

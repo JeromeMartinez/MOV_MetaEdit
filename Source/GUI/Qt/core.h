@@ -19,6 +19,7 @@ struct FileInfo
     bool         Valid;
     bool         Modified;
     bool         ValueValid;
+    MetaDataType Previous;
     MetaDataType MetaData;
     mp4_Handler* H;
 
@@ -36,7 +37,7 @@ class Core
 {
 public:
     Core();
-    FileInfo Read_Data(const QString &FileName);
+    FileInfo Read_Data(const QString &FileName, bool CheckFileName=false);
     void Add_File(const QString &FileName);
 
     size_t Open_Files(const QString& FileName);

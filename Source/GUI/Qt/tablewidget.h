@@ -47,6 +47,15 @@ public:
 };
 
 //---------------------------------------------------------------------------
+class NoneValidator : public QValidator
+{
+    Q_OBJECT
+public:
+    NoneValidator(QObject* Parent = 0);
+    QValidator::State validate(QString& Input, int& Pos) const;
+};
+
+//---------------------------------------------------------------------------
 class RegistryDelegate : public QItemDelegate
 {
     Q_OBJECT

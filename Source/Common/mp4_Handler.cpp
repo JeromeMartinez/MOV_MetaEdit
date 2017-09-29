@@ -282,6 +282,7 @@ bool mp4_Handler::Set(const string &Field, const string &Value)
                 if (Item.data_Size)
                 {
                     Item.ToBeReplacedBy=Value;
+                    Item.ToBeReplacedBy_Modified=true;
                     return true;
                 }
             }
