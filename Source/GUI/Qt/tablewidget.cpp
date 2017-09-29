@@ -283,7 +283,7 @@ void TableWidget::Update_Table()
 {
     size_t Valid = 0;
     bool Modified = false;
-    
+
     //Get opened files
     FileList* Files = C->Get_Files();
 
@@ -301,8 +301,8 @@ void TableWidget::Update_Table()
     //Display new files
     for(FileList::iterator It = Files->begin(); It != Files->end(); It++)
     {
-        int Row = -1;
-        QModelIndexList Matches = model()->match(model()->index(0,0), Qt::DisplayRole, It.key());
+        int Row = rowCount();
+        QModelIndexList Matches = model()->match(model()->index(0,0), Qt::DisplayRole, It.key(), -1);
 
         for(QModelIndexList::iterator It2 = Matches.begin(); It2 != Matches.end(); It2++)
         {
@@ -313,11 +313,8 @@ void TableWidget::Update_Table()
             }
         }
 
-        if(Row == -1)
-        {
+        if(Row == rowCount())
             insertRow(rowCount());
-            Row = rowCount() - 1;
-        }
 
         QTableWidgetItem* Name = new QTableWidgetItem(It.key());
         Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
