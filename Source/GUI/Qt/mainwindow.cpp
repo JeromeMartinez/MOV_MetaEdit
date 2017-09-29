@@ -245,7 +245,6 @@ void MainWindow::on_Menu_File_Close_All_triggered()
     Files->clear();
 
     Ui->Table_Widget->Update_Table();
-
 }
 
 //---------------------------------------------------------------------------

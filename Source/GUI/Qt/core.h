@@ -36,7 +36,8 @@ class Core
 {
 public:
     Core();
-    void Dummy_Handler(const QString &FileName);
+    FileInfo Read_Data(const QString &FileName);
+    void Add_File(const QString &FileName);
 
     size_t Open_Files(const QString& FileName);
 

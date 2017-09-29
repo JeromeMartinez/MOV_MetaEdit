@@ -22,7 +22,7 @@ Core::Core()
 }
 
 //---------------------------------------------------------------------------
-void Core::Dummy_Handler(const QString &FileName)
+FileInfo Core::Read_Data(const QString &FileName)
 {
     FileInfo Current;
 
@@ -50,12 +50,31 @@ void Core::Dummy_Handler(const QString &FileName)
             Current.ValueValid = true;
         }
     }
+    else if(Current.Valid && !idvalue.empty())
+    {
+        QString Value = QString::fromUtf8(idvalue.c_str());
+        QValidator::State State = QValidator::Invalid;
+        int Pos = 0;
+        if(idregistry == "ad-id.org")
+            State = AdIdValidator().validate(Value, Pos);
+        else
+            State = OtherValidator().validate(Value, Pos);
+
+        if (State == QValidator::Acceptable)
+            Current.ValueValid = true;
+    }
 
     MetaData = qMakePair(QString::fromUtf8(idregistry.c_str()), QString::fromUtf8(idvalue.c_str()));
     Current.MetaData = MetaData;
 
-    //Adding it to the list
-    Files.insert(FileName, Current);
+    return Current;
+}
+
+//---------------------------------------------------------------------------
+void Core::Add_File(const QString &FileName)
+{
+    //Adding file to the list
+    Files.insert(FileName, Read_Data(FileName));
 }
 
 //---------------------------------------------------------------------------
@@ -75,7 +94,7 @@ size_t Core::Open_Files(const QString &FileName)
     }
 
     for(int Pos = 0; Pos < List.size(); Pos++)
-        Dummy_Handler(List[Pos]);
+        Add_File(List[Pos]);
 
     return List.size();
 }
@@ -101,8 +120,9 @@ bool Core::Save_File(const QString& FileName)
         Value.From_UTF8(F.MetaData.second.toUtf8().constData());
         F.H->Set("com.universaladid.idregistry", Registry.To_Local());
         F.H->Set("com.universaladid.idvalue", Value.To_Local());
-
         F.H->Save();
+
+        Files.insert(FileName, Read_Data(FileName));
     }
 
     return true;
