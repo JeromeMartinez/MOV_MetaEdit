@@ -70,6 +70,9 @@ QValidator::State OtherValidator::validate(QString& Input, int& Pos) const
     if(Input.size() > 255)
         return QValidator::Invalid;
 
+    if(Input.size() < 0)
+        return QValidator::Intermediate;
+
     return QValidator::Acceptable;
 }
 
@@ -135,6 +138,7 @@ QWidget* ValueDelegate::createEditor(QWidget* Parent,
                                     const QModelIndex& Index) const
 {
     Q_UNUSED(Option)
+    Q_UNUSED(Index)
 
     QLineEdit *Editor = new QLineEdit(Parent);
 
@@ -267,65 +271,66 @@ void TableWidget::Update_Table()
     //Get opened files
     FileList* Files = C->Get_Files();
 
-    //Get displayed entries
-    QStringList Entries;
+    //Remove deleted entry
     for(int Row = rowCount() - 1; Row >= 0; Row--)
     {
         QString Entry = item(Row, FILE_COLUMN)->data(Qt::DisplayRole).toString();
-
         if(Files->find(Entry) == Files->end())
         {
-            //Remove deleted entry
             removeRow(Row);
             continue;
         }
-
-        Entries.append(Entry);
-        //Display modified entries in bold
-        Set_Display(Row, Files->value(Entry).Valid, Files->value(Entry).Modified, Files->value(Entry).ValueValid);
-
-        if(Files->value(Entry).Modified)
-            Modified = true;
-
-        if (Files->value(Entry).Valid)
-            Valid++;
     }
 
     //Display new files
     for(FileList::iterator It = Files->begin(); It != Files->end(); It++)
     {
-        if(!Entries.contains(It.key()))
+        int Row = -1;
+        QModelIndexList Matches = model()->match(model()->index(0,0), Qt::DisplayRole, It.key());
+
+        for(QModelIndexList::iterator It2 = Matches.begin(); It2 != Matches.end(); It2++)
         {
-            QTableWidgetItem* Name = new QTableWidgetItem(It.key());
-            Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
-            QTableWidgetItem* Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first  :QString::fromUtf8("(Parsing error)"));
-            QTableWidgetItem* Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
-            if (It->Valid)
+            if(It2->column() == FILE_COLUMN)
             {
-                Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first : QString::fromUtf8("(Parsing error)"));
-                Registry->setToolTip("Double-click for editing the Universal Ad ID registry of this file.");
-                Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
-                Value->setToolTip("Double-click for editing the Universal Ad ID value of this file.\nA-Z 0-9 only.");
+                Row = It2->row();
+                break;
             }
-            else
-            {
-                Registry = new QTableWidgetItem("(Parsing error)");
-                Value = new QTableWidgetItem(It->H->PerFile_Error.str().c_str());
-            }
-
-            insertRow(rowCount());
-            setItem(rowCount() - 1, FILE_COLUMN, Name);
-            setItem(rowCount() - 1, REGISTRY_COLUMN, Registry);
-            setItem(rowCount() - 1, VALUE_COLUMN, Value);
-
-            if(It->Modified)
-                Modified = true;
-
-            if (It->Valid)
-                Valid++;
-
-            Set_Display(rowCount() - 1, It->Valid, It->Modified, It->ValueValid);
         }
+
+        if(Row == -1)
+        {
+            insertRow(rowCount());
+            Row = rowCount() - 1;
+        }
+
+        QTableWidgetItem* Name = new QTableWidgetItem(It.key());
+        Name->setFlags(Name->flags() ^ Qt::ItemIsEditable);
+        QTableWidgetItem* Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first  :QString::fromUtf8("(Parsing error)"));
+        QTableWidgetItem* Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
+        if (It->Valid)
+        {
+            Registry = new QTableWidgetItem(It->Valid ? It->MetaData.first : QString::fromUtf8("(Parsing error)"));
+            Registry->setToolTip("Double-click for editing the Universal Ad ID registry of this file.");
+            Value = new QTableWidgetItem(It->Valid ? It->MetaData.second : QString::fromStdString(It->H->PerFile_Error.str()));
+            Value->setToolTip("Double-click for editing the Universal Ad ID value of this file.\nA-Z 0-9 only.");
+        }
+        else
+        {
+            Registry = new QTableWidgetItem("(Parsing error)");
+            Value = new QTableWidgetItem(It->H->PerFile_Error.str().c_str());
+        }
+
+        setItem(Row, FILE_COLUMN, Name);
+        setItem(Row, REGISTRY_COLUMN, Registry);
+        setItem(Row, VALUE_COLUMN, Value);
+
+        if (It->Modified)
+            Modified = true;
+
+        if (It->Valid)
+            Valid++;
+
+        Set_Display(Row, It->Valid, It->Modified, It->ValueValid);
     }
 
     if (Valid)
