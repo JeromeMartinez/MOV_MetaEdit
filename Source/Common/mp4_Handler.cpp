@@ -137,14 +137,6 @@ bool mp4_Handler::Save()
     }
 
     //Modifying the blocks in memory
-    /*
-    for (size_t Fields_Pos=0; Fields_Pos<Fields_Max; Fields_Pos++)
-        for (size_t Pos=0; Pos<xxxx_Strings_Size[Fields_Pos]; Pos++)
-        {
-            if (!IsOriginal(xxxx_Strings[Fields_Pos][Pos], Get(xxxx_Strings[Fields_Pos][Pos])))
-                Chunks->Modify(Elements::WAVE, Chunk_Name2_Get(xxxx_Strings[Fields_Pos][Pos]), Chunk_Name3_Get(xxxx_Strings[Fields_Pos][Pos]));
-        }
-    */
     Chunks->Modify(Elements::moov, Elements::moov_meta, Elements::moov_meta_hdlr);
     Chunks->Modify(Elements::moov, Elements::moov_meta, Elements::moov_meta_keys);
     Chunks->Modify(Elements::moov, Elements::moov_meta, Elements::moov_meta_ilst);
@@ -207,11 +199,32 @@ string mp4_Handler::Get(const string &Field)
         if (!Chunks || !Chunks->Global || !Chunks->Global->moov_meta_ilst)
             return string();
 
-        map<string, string>::iterator Value=Chunks->Global->moov_meta_ilst->KnownValues.find(Field);
-        if (Value==Chunks->Global->moov_meta_ilst->KnownValues.end())
+        // Searching key order
+        size_t i = 0;
+        while (i < Chunks->Global->moov_meta_keys->Keys.size())
+        {
+            mp4_Base::global::block_moov_meta_key& Key = Chunks->Global->moov_meta_keys->Keys[i];
+            if (Key.namespace_==0x6D647461 && string((const char*)Key.value, Key.size-8)==Field)
+                break;
+            i++;
+        }
+        if (i >= Chunks->Global->moov_meta_keys->Keys.size())
             return string();
-
-        return Value->second;
+        
+        // Searching value
+        i++; //1-based
+        size_t j = 0;
+        while (j < Chunks->Global->moov_meta_ilst->Items.size())
+        {
+            mp4_Base::global::block_moov_meta_list& Item = Chunks->Global->moov_meta_ilst->Items[j];
+            if (Item.name == i)
+            {
+                if (Item.data_Size)
+                    return string((const char*)Item.value+Item.data_Pos+16, Item.data_Size-16);
+            }
+            j++;
+        }
+        return string();
     }
         
     mp4_Base::global::block_strings** Chunk_Strings=block_strings_Get(Field);
@@ -235,6 +248,46 @@ bool mp4_Handler::Set(const string &Field, const string &Value)
     //Setting it
     if (Field=="com.universaladid.idregistry" || Field == "com.universaladid.idvalue")
     {
+        if (!Chunks || !Chunks->Global || !Chunks->Global->moov_meta_ilst)
+        {
+            Chunks->Global->moov_meta_keys_NewKeys.push_back(Field);
+            Chunks->Global->moov_meta_ilst_NewValues.push_back(Value);
+            return true;
+        }
+            
+        // Searching key order
+        size_t i = 0;
+        while (i < Chunks->Global->moov_meta_keys->Keys.size())
+        {
+            mp4_Base::global::block_moov_meta_key& Key = Chunks->Global->moov_meta_keys->Keys[i];
+            if (Key.namespace_==0x6D647461 && string((const char*)Key.value, Key.size-8)==Field)
+                break;
+            i++;
+        }
+        if (i >= Chunks->Global->moov_meta_keys->Keys.size())
+        {
+            Chunks->Global->moov_meta_keys_NewKeys.push_back(Field);
+            Chunks->Global->moov_meta_ilst_NewValues.push_back(Value);
+            return true;
+        }
+        
+        // Searching value
+        i++; //1-based
+        size_t j = 0;
+        while (j < Chunks->Global->moov_meta_ilst->Items.size())
+        {
+            mp4_Base::global::block_moov_meta_list& Item = Chunks->Global->moov_meta_ilst->Items[j];
+            if (Item.name == i)
+            {
+                if (Item.data_Size)
+                {
+                    Item.ToBeReplacedBy=Value;
+                    return true;
+                }
+            }
+            j++;
+        }
+
         Chunks->Global->moov_meta_keys_NewKeys.push_back(Field);
         Chunks->Global->moov_meta_ilst_NewValues.push_back(Value);
         return true;

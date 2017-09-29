@@ -9,7 +9,7 @@
 //---------------------------------------------------------------------------
 
 //***************************************************************************
-// WAVE
+// Read
 //***************************************************************************
 
 //---------------------------------------------------------------------------
@@ -41,7 +41,8 @@ void mp4_moov_meta_keys::Read_Internal ()
         Get_String(Key_size-8, Key_value);
         if (Key_namespace!=0x6D647461 && (Key_value=="com.universaladid.idregistry" || Key_value=="com.universaladid.idvalue")) //mdta
             throw exception_read_block("UniversalAdId fields not mdta unsupported");
-        Global->moov_meta_keys->Keys.push_back(Key_value);
+
+        Global->moov_meta_keys->Keys.push_back(global::block_moov_meta_key(Key_size, Key_namespace, Chunk.Content.Buffer+(size_t)Chunk.Content.Buffer_Offset-(Key_size-8)));
         Global->moov_meta_keys_AlreadyPresent++;
     }
 

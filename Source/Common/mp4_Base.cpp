@@ -131,10 +131,18 @@ void mp4_Base::Read (block &Chunk_In)
         if (Global->moov[0]->File_Offset > Global->mdat->File_Offset_Begin && Global->moov[0]->File_Offset < Global->mdat->File_Offset_End)
             throw exception_read_block("moov atom between 2 mdat atoms not yet supported");
         //UniversalAdId fields already present not supported
-        if (Global->moov_meta_keys)
+        /*if (Global->moov_meta_keys)
             for (size_t i=0; i<Global->moov_meta_keys->Keys.size(); i++)
-                if ((Global->moov_meta_keys->Keys[i] == "com.universaladid.idregistry" || Global->moov_meta_keys->Keys[i] == "com.universaladid.idvalue")) //mdta
-                    throw exception_read_block("UniversalAdId fields already present");
+            {
+                global::block_moov_meta_key &key = Global->moov_meta_keys->Keys[i];
+                if (key.namespace_==0x6D647461)
+                {
+                    string value((char*)key.value, key.size-8);
+                    if (value=="com.universaladid.idregistry"
+                     || value=="com.universaladid.idvalue")
+                        throw exception_read_block("UniversalAdId fields already present");
+                }
+            }*/
     }
 }
 
@@ -310,7 +318,7 @@ void mp4_Base::Write ()
         bool DataChunkMustBeMoved;
         do
         {
-            //Calculating the size of WAVE block up to data block
+            //Calculating the size of block up to data block
             int64u File_Begin_Offset_Theory=Subs[0]->Chunk.Header.Size;
             size_t Pos=0;
             for (; Pos<Subs[0]->Subs.size(); Pos++)
@@ -417,6 +425,21 @@ void mp4_Base::Write ()
             {
                 if (Global->Out.Write(Global->Out_Buffer_End.Data, Global->Out_Buffer_End.Size)!=Global->Out_Buffer_End.Size)
                     throw exception_write("Can not write the file, file may be CORRUPTED");
+            }
+
+            //Padding
+            int64u Remaining=Global->Out.Size_Get()-Global->Out.Position_Get();
+            if (Remaining)
+            {
+                if (Remaining<8)
+                    Remaining=8;
+                if (Remaining>0xFFFFFFFF)
+                    throw exception_write("Content to put with free atom is too big, file may be CORRUPTED");
+                int8u* Header=new int8u[Remaining];
+                int32u2BigEndian(Header, Remaining);
+                int32u2BigEndian(Header + 4, Elements::free);
+                memset(Header + 8, 0x00, Remaining-8);
+                Global->Out.Write(Header, Remaining);
             }
 
             //Cleanup
@@ -614,7 +637,7 @@ int64u mp4_Base::Block_Size_Get ()
                 Subs[Pos]->Chunk.Header.Level=Subs[Pos+1]->Chunk.Header.Level;
                 Subs[Pos]->Chunk.Header.Name=Elements::free;
                 if (12+Size+8+8<=Global->data->File_Offset)
-                    Subs[Pos]->Chunk.Content.Size=Global->data->File_Offset-(12+Size+8+8); //WAVE Header + Size + FLLR header + data header
+                    Subs[Pos]->Chunk.Content.Size=Global->data->File_Offset-(12+Size+8+8); //Header + Size + free header + data header
                 if (Size>Global->data->File_Offset)
                     Subs[Pos]->Chunk.Content.Size=mp4_free_DefaultSise; //Additional padding of mp4_free_DefaultSise.
                 Subs[Pos]->Chunk.Content.Buffer=new int8u[(size_t)Subs[Pos]->Chunk.Content.Size];
@@ -631,27 +654,6 @@ int64u mp4_Base::Block_Size_Get ()
                     break;
                 */
             }
-        }
-        if (Pos+1==Subs.size() && Subs[Pos]->Chunk.Header.Name!=Elements::free)
-        {
-            //Padding if we can
-            //if (Size+Subs[Pos]->Block_Size_Get()<Global->WAVE->Size_Original)
-            {
-                /*
-                Subs.insert(Subs.end(), new mp4_free(Global));
-                Subs[Pos+1]->Chunk.Header.Level=Subs[Pos-1]->Chunk.Header.Level;
-                Subs[Pos+1]->Chunk.Header.Name=Elements::free;
-                if (Size+Subs[Pos]->Block_Size_Get()+8<=Global->WAVE->Size_Original)
-                    Subs[Pos+1]->Chunk.Content.Size=Global->WAVE->Size_Original-(Size+Subs[Pos]->Block_Size_Get()+8); //Size + FLLR header
-                else
-                    Subs[Pos+1]->Chunk.Content.Size=0;
-                Subs[Pos+1]->Chunk.Content.Buffer=new int8u[(size_t)Subs[Pos+1]->Chunk.Content.Size];
-                memset(Subs[Pos+1]->Chunk.Content.Buffer, 0x00, (size_t)Subs[Pos+1]->Chunk.Content.Size);
-                Subs[Pos+1]->Chunk.Content.IsModified=true;
-                Subs[Pos+1]->Chunk.Content.Size_IsModified=true;
-                */
-            }
-
         }
         Size+=Subs[Pos]->Block_Size_Get();
     }

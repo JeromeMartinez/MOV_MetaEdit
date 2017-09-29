@@ -83,6 +83,7 @@ protected: \
 }; \
 
 CHUNK_W(1, mdat);
+CHUNK_W(1, free);
 CHUNK_I(1, moov);
 CHUNK_I(2, moov_meta);
 CHUNK_W(3, moov_meta_hdlr);

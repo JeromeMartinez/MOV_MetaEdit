@@ -105,6 +105,55 @@ public:
     //Global structure for handling common data
     struct global
     {
+        struct block_moov_meta_list
+        {
+            int32u size;
+            int32u name;
+            int8u* value; //Size is size-8
+            size_t data_Pos;
+            size_t data_Size;
+            string ToBeReplacedBy;
+
+            block_moov_meta_list()
+                : size(0)
+                , name(0)
+                , value(NULL)
+            {}
+
+            block_moov_meta_list(int32u size_, int32u name_, int8u* value_)
+                : size(size_)
+                , name(name_)
+                , value(value_)
+                , data_Pos(0)
+                , data_Size(0)
+            {}
+
+            block_moov_meta_list(int32u size_, int32u name_, int8u* value_, size_t data_Pos_, size_t data_Size_)
+                : size(size_)
+                , name(name_)
+                , value(value_)
+                , data_Pos(data_Pos_)
+                , data_Size(data_Size_)
+            {}
+        };
+        struct block_moov_meta_key
+        {
+            int32u size;
+            int32u namespace_;
+            int8u* value; //Size is size-8
+
+            block_moov_meta_key()
+                : size(0)
+                , namespace_(0)
+                , value(NULL)
+            {}
+
+            block_moov_meta_key(int32u size_, int32u namespace__, int8u* value_)
+                : size(size_)
+                , namespace_(namespace__)
+                , value(value_)
+            {}
+        };
         struct block_mdat
         {
             int64u          File_Offset_Begin;
@@ -127,7 +176,7 @@ public:
         };
         struct block_moov_meta_ilst
         {
-            map<string, string> KnownValues;
+            vector<block_moov_meta_list> Items;
 
             block_moov_meta_ilst()
             {
@@ -135,7 +184,7 @@ public:
         };
         struct block_moov_meta_keys
         {
-            vector<string>      Keys;
+            vector<block_moov_meta_key> Keys;
 
             block_moov_meta_keys()
             {
