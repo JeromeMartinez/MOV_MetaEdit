@@ -97,53 +97,56 @@ void mp4_moov_meta_ilst::Modify_Internal()
     // Creating buffer
     int8u* OldBuffer=Chunk.Content.Buffer;
     Chunk.Content.Size=0;
-    for (size_t i=0; i<Global->moov_meta_ilst->Items.size(); i++)
-    {
-        global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
-        Chunk.Content.Size+=Item.size;
-        if (Item.data_Size)// && Item.ToBeReplacedBy.size())
+    if (Global->moov_meta_ilst)
+        for (size_t i=0; i<Global->moov_meta_ilst->Items.size(); i++)
         {
-            Chunk.Content.Size-=Item.data_Size-16;
-            Chunk.Content.Size+=Item.ToBeReplacedBy.size();
+            global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
+            Chunk.Content.Size+=Item.size;
+            if (Item.data_Size)// && Item.ToBeReplacedBy.size())
+            {
+                Chunk.Content.Size-=Item.data_Size-16;
+                Chunk.Content.Size+=Item.ToBeReplacedBy.size();
+            }
         }
-    }
     for (size_t i=0; i<Global->moov_meta_ilst_NewValues.size(); i++)
         Chunk.Content.Size+=8+8+8+Global->moov_meta_ilst_NewValues[i].size();
 
     // Copy or replace data
-    int8u* t=new int8u[Chunk.Content.Size];
+    int8u* t=Chunk.Content.Buffer;;
+    Chunk.Content.Buffer=new int8u[Chunk.Content.Size];
     Chunk.Content.Buffer_Offset=0;
-    for (size_t i=0; i<Global->moov_meta_ilst->Items.size(); i++)
-    {
-        global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
-        if (Item.data_Size)// && Item.ToBeReplacedBy.size())
+    if (Global->moov_meta_ilst)
+        for (size_t i=0; i<Global->moov_meta_ilst->Items.size(); i++)
         {
-            Put_B4((int32u)(Item.size-(Item.data_Size-16)+Item.ToBeReplacedBy.size()));
-            Put_B4((int32u)(Item.name));
-            if (Item.data_Pos)
+            global::block_moov_meta_list& Item=Global->moov_meta_ilst->Items[i];
+            if (Item.data_Size)// && Item.ToBeReplacedBy.size())
             {
-                memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value, Item.data_Pos);
-                Chunk.Content.Buffer_Offset+=Item.data_Pos;
+                Put_B4((int32u)(Item.size-(Item.data_Size-16)+Item.ToBeReplacedBy.size()));
+                Put_B4((int32u)(Item.name));
+                if (Item.data_Pos)
+                {
+                    memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value, Item.data_Pos);
+                    Chunk.Content.Buffer_Offset+=Item.data_Pos;
+                }
+                Put_B4(16+Item.ToBeReplacedBy.size()); //data
+                Put_B4(0x64617461); //data
+                Put_B4(0x00000001); //UTF-8
+                Put_B4(0x00000000); //No locale
+                Put_String(Item.ToBeReplacedBy.size(), Item.ToBeReplacedBy);
+                if (Item.size-8-(Item.data_Pos+Item.data_Size))
+                {
+                    memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value+(Item.data_Pos+Item.data_Size), Item.size-8-(Item.data_Pos+Item.data_Size));
+                    Chunk.Content.Buffer_Offset+=Item.size-8-(Item.data_Pos+Item.data_Size);
+                }
             }
-            Put_B4(16+Item.ToBeReplacedBy.size()); //data
-            Put_B4(0x64617461); //data
-            Put_B4(0x00000001); //UTF-8
-            Put_B4(0x00000000); //No locale
-            Put_String(Item.ToBeReplacedBy.size(), Item.ToBeReplacedBy);
-            if (Item.size-8-(Item.data_Pos+Item.data_Size))
+            else
             {
-                memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value+(Item.data_Pos+Item.data_Size), Item.size-8-(Item.data_Pos+Item.data_Size));
-                Chunk.Content.Buffer_Offset+=Item.size-8-(Item.data_Pos+Item.data_Size);
+                Put_B4((int32u)(Item.size));
+                Put_B4((int32u)(Item.name));
+                memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value, Item.size-8);
+                Chunk.Content.Buffer_Offset+=Item.size-8;
             }
         }
-        else
-        {
-            Put_B4((int32u)(Item.size));
-            Put_B4((int32u)(Item.name));
-            memcpy(Chunk.Content.Buffer+Chunk.Content.Buffer_Offset, Item.value, Item.size-8);
-            Chunk.Content.Buffer_Offset+=Item.size-8;
-        }
-    }
 
     // Add data
     for (size_t i=0; i<Global->moov_meta_ilst_NewValues.size(); i++)
@@ -158,7 +161,7 @@ void mp4_moov_meta_ilst::Modify_Internal()
     }
     Global->moov_meta_ilst_AlreadyPresent+=Global->moov_meta_ilst_NewValues.size();
     Global->moov_meta_ilst_NewValues.clear();
-
+    delete[] t;
 
 
 

@@ -431,15 +431,19 @@ void mp4_Base::Write ()
             int64u Remaining=Global->Out.Size_Get()-Global->Out.Position_Get();
             if (Remaining)
             {
-                if (Remaining<8)
-                    Remaining=8;
-                if (Remaining>0xFFFFFFFF)
-                    throw exception_write("Content to put with free atom is too big, file may be CORRUPTED");
-                int8u* Header=new int8u[Remaining];
-                int32u2BigEndian(Header, Remaining);
-                int32u2BigEndian(Header + 4, Elements::free);
-                memset(Header + 8, 0x00, Remaining-8);
-                Global->Out.Write(Header, Remaining);
+                if (!Global->Out.Truncate()) //Trying to truncate, and fallback to add a free atom if it is not possible
+                {
+                    if (Remaining<8)
+                        Remaining=8;
+                    if (Remaining>0xFFFFFFFF)
+                        throw exception_write("Content to put with free atom is too big, file may be CORRUPTED");
+                    int8u* Header=new int8u[Remaining];
+                    int32u2BigEndian(Header, Remaining);
+                    int32u2BigEndian(Header + 4, Elements::free);
+                    memset(Header + 8, 0x00, Remaining-8);
+                    if (Global->Out.Write(Header, Remaining)!=Remaining)
+                        throw exception_write("Can not write the file, file may be CORRUPTED");
+                }
             }
 
             //Cleanup
