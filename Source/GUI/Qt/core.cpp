@@ -127,7 +127,7 @@ bool Core::Save_File(const QString& FileName)
         F.H->Set("com.universaladid.idvalue", Value.To_Local());
         F.H->Save();
 
-        Files.insert(FileName, Read_Data(FileName));
+        Files.insert(FileName, Read_Data(FileName, false));
     }
 
     return true;
