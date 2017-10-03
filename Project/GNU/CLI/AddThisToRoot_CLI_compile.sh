@@ -21,8 +21,8 @@ Zen_Make()
 
 #############################################################################
 # MOV_MetaEdit
-if test -e MOV_MetaEdit/Project/GNU/CLI/configure; then
- cd MOV_MetaEdit/Project/GNU/CLI/
+if test -e Project/GNU/CLI/configure; then
+ cd Project/GNU/CLI/
  test -e Makefile && rm Makefile
  chmod u+x configure
  ./configure --enable-staticlibs $*
