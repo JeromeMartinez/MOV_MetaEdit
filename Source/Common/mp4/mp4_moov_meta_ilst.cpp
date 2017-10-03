@@ -68,6 +68,8 @@ void mp4_moov_meta_ilst::Read_Internal ()
                     }
                 }
             }
+            else
+                Skip_XX(Key_size-8);
         }
 
         if (PreviousSize==Global->moov_meta_ilst->Items.size())
