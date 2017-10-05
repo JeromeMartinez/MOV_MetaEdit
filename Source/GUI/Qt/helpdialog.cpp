@@ -16,6 +16,7 @@
 HelpDialog::HelpDialog(QWidget* Parent) : QDialog(Parent), Ui(new Ui::HelpDialog)
 {
     Ui->setupUi(this);
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
     move(QApplication::desktop()->screenGeometry().width() / 10,
         QApplication::desktop()->screenGeometry().height() / 10);
