@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *Parent) : QMainWindow(Parent), Ui(new Ui::MainWi
     Ui->Tool_Bar->addSeparator();
     Ui->Tool_Bar->addAction(Ui->Menu_File_Save_All);
     Ui->Tool_Bar->addSeparator();
+    Ui->Tool_Bar->addAction(Ui->Menu_Help_Help);
     Ui->Tool_Bar->addAction(Ui->Menu_Help_About);
 
     //Setup context menu

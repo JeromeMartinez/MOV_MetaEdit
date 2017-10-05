@@ -278,6 +278,12 @@
    <property name="text">
     <string>H&amp;elp...</string>
    </property>
+   <property name="toolTip">
+    <string>Documentation</string>
+   </property>
+   <property name="statusTip">
+    <string>Documentation</string>
+   </property>
    <property name="shortcutContext">
     <enum>Qt::ApplicationShortcut</enum>
    </property>
