@@ -134,6 +134,8 @@ signals:
 
 private:
     Core* C;
+    int ColumnSize[MAX_COLUMN+1];
+    float ColumnSize_Ratio[MAX_COLUMN+1];
 };
 
 #endif // TABLEWIDGET_H

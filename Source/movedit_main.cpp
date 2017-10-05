@@ -28,8 +28,8 @@ int main(int argc, char* argv[])
 
     ZtringList FileNames;
     double wscale_New = 0;
-    uint16_t par_h_New = 0;
-    uint16_t par_v_New = 0;
+    uint32_t par_h_New = 0;
+    uint32_t par_v_New = 0;
     bool simulate = false;
     AdID AdID_Content;
     bool AdID_Requested=false;
@@ -91,11 +91,18 @@ int main(int argc, char* argv[])
         }
     }
 
+    if ((wscale_New || par_h_New || par_v_New)
+     && AdID_Requested)
+    {
+        cout << "PAR options and Ad-ID options can not currently be used together" << endl;
+        return -1;
+    }
+
     if (FileNames.empty())
         return Usage();
     ZtringList List;
     for (size_t i=0; i<FileNames.size(); i++)
-        List+=Dir::GetAllFileNames(FileNames[i]);
+        List+=Dir::GetAllFileNames(FileNames[i], Dir::Include_Dirs);
     std::vector<Structure*> Structures;
     for (ZtringList::iterator Item = List.begin(); Item != List.end(); Item++)
     {
@@ -106,8 +113,6 @@ int main(int argc, char* argv[])
             if (!H->Open((*Item).To_Local()))
             {
                 cout << " Can not open file: " << H->Errors.str() << endl;
-                delete H;
-                continue;
             }
 
             Structures.push_back((Structure*)H); //Hack for storing mp4_Handler
@@ -206,8 +211,12 @@ int main(int argc, char* argv[])
             mp4_Handler* H = (mp4_Handler*)(*Item); //Hack for storing mp4_Handler
 
             AdID AdID_Content_Temp=AdID_Content;
-            AdID_Content_Temp.SetName(Name);
-            bool OK = AdID_Content_Temp.Validate();
+            AdID_Content_Temp.SetName(ItemName->To_Local());
+            bool OK;
+            if (H->Errors.str().empty())
+                OK = AdID_Content_Temp.Validate();
+            else
+                OK = false;
             if (OK)
             {
                 if (!H->Errors.str().empty())
@@ -327,8 +336,9 @@ int main(int argc, char* argv[])
             {
                 stringstream Temp;
                 Temp << Video->pasp.h << ":" << Video->pasp.v;
-                for (size_t Pos = 0; Pos < 5 - Temp.str().size(); ++Pos)
-                    cout << " ";
+                if (Temp.str().size()<5)
+                    for (size_t Pos = 0; Pos < 5 - Temp.str().size(); ++Pos)
+                        cout << " ";
                 cout << Temp.str();
             }
             else

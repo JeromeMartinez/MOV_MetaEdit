@@ -15,7 +15,14 @@
 // Info
 //***************************************************************************
 
-static const int ColumnSize[MAX_COLUMN] =
+static const char* ColumnName_Default[MAX_COLUMN] =
+{
+    "File Name",
+    "Registry",
+    "Value",
+};
+
+static const int ColumnSize_Default[MAX_COLUMN] =
 {
     60,
     20,
@@ -212,9 +219,11 @@ void TableWidget::Setup(Core *C)
     // Setup table widget
     QStringList Header_Labels;
 
-    Header_Labels.append("File Name");
-    Header_Labels.append("Registry");
-    Header_Labels.append("Value");
+    for (int i = 0; i < MAX_COLUMN; i++)
+    {
+        Header_Labels.append(ColumnName_Default[i]);
+        ColumnSize[i] = 0;
+    }
     setColumnCount(MAX_COLUMN);
     setHorizontalHeaderLabels(Header_Labels);
 #if QT_VERSION < 0x050000
@@ -357,15 +366,46 @@ void TableWidget::Update_Table()
 //---------------------------------------------------------------------------
 void TableWidget::resizeEvent(QResizeEvent* Event)
 {
-    //Do nothing if columns size exceed aviable space
-    if(!horizontalScrollBar()->isVisible())
+    //Changed?
+    bool c = false;
+    bool d = false;
+    for (int i = 0; i < MAX_COLUMN; i++)
     {
-        qreal Total_New = Event->size().width();
-        setColumnWidth(0, Total_New * ColumnSize[0] / 100);
-        setColumnWidth(1, Total_New * ColumnSize[1] / 100);
-        setColumnWidth(2, Total_New * ColumnSize[2] / 100);
-        setColumnWidth(3, Total_New * ColumnSize[3] / 100);
+        if (ColumnSize[i] != columnWidth(i))
+            c = true;
+        if (!ColumnSize[i])
+            d = true;
     }
+    if (d)
+    {
+        //First time
+        int ColumnSize_Default_Total=0;
+        for (int i = 0; i < MAX_COLUMN + 1; i++)
+            ColumnSize_Default_Total += ColumnSize_Default[i];
+        for (int i = 0; i < MAX_COLUMN + 1; i++)
+            ColumnSize_Ratio[i] = ((float)ColumnSize_Default[i]) / ColumnSize_Default_Total;
+        ColumnSize_Ratio[MAX_COLUMN] = 0;
+    }
+    else if (c)
+    {
+        // With small widths, update was having weird behavior due to rounding issues
+        float t = 1;
+        for (int i = 0; i < MAX_COLUMN; i++)
+        {
+            ColumnSize_Ratio[i] = ((float)columnWidth(i)) / size().width();
+            t -= ColumnSize_Ratio[i];
+        }
+        ColumnSize_Ratio[MAX_COLUMN] = t;
+    }
+
+    //Update
+    qreal Total_New = Event->size().width();
+    for (int i = 0; i < MAX_COLUMN+1; i++)
+    {
+        ColumnSize[i] = (int)(Total_New * ColumnSize_Ratio[i]);
+        setColumnWidth(i, ColumnSize[i]);
+    }
+
     //Call base resizeEvent to handle the vertical resizing
     QTableView::resizeEvent(Event);
 }

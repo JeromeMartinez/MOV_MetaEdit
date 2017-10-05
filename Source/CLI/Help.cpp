@@ -37,6 +37,10 @@ ReturnValue Help()
 {
     STRINGOUT(string("Usage: \" [options] FileNames [options]\"").insert(8, Program_Name));
     TEXTOUT("");
+    TEXTOUT("This tool was developed for 2 specific purposes:");
+    TEXTOUT("- Modify PAR (Pixel Aspect Ratio) of NTSC files");
+    TEXTOUT("- Inject or edit Ad-ID metadata");
+    TEXTOUT("");
     TEXTOUT("Help:");
     TEXTOUT("  --help, -h");
     TEXTOUT("      Display this help and exit");
@@ -67,9 +71,12 @@ ReturnValue Help_AdID()
     TEXTOUT("Options related to Ad-iD:");
     TEXTOUT("  --add-adid Value");
     TEXTOUT("      Add an Id-iD value");
+    TEXTOUT("      Use Value of \"auto\" for filling automaticly from the file name (11-12 chars)");
     TEXTOUT("  --add-adid-registry Value");
     TEXTOUT("      Id-iD is stored with the specified value as registry");
     TEXTOUT("      (default is \"ad-id.org\")");
+    TEXTOUT("  --simulate, -s");
+    TEXTOUT("      Do not modify file (only display of potential modifications)");
     TEXTOUT("");
     TEXTOUT("Examples:");
     STRINGOUT(string(" --add-adid ADID0000000 FileName.mov").insert(0, Program_Name));
