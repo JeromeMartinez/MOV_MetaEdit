@@ -44,41 +44,52 @@ int main(int argc, char* argv[])
         if (Ztring(argv[argp]) == __T("--help-par"))
             return Help_PAR();
 
-        if (argp+1<argc && Ztring(argv[argp]) == __T("--add-adid"))
+        if (argp+1<argc && Ztring(argv[argp]) == __T("--adid"))
         {
             AdID_Requested=true;
             AdID_Content.Set(argv[argp+1]);
+            argp++;
         }
-        if (argp+1<argc && Ztring(argv[argp]) == __T("--add-adid-registry"))
+        if (argp+1<argc && Ztring(argv[argp]) == __T("--adid-registry"))
         {
             AdID_Requested=true;
             AdID_Content.SetRegistry(argv[argp+1]);
+            argp++;
         }
-        else if (Ztring(argv[argp]) == __T("-p")
-         || Ztring(argv[argp]) == __T("--par")
-         || Ztring(argv[argp]) == __T("-par"))
+        else if (argp + 1<argc
+         && (Ztring(argv[argp]) == __T("-p")
+          || Ztring(argv[argp]) == __T("--par")
+          || Ztring(argv[argp]) == __T("-par")))
         {
-            par_h_New = 9;
-            par_v_New = 10;
-            if (par_h_New == 0)
+            stringstream par_ss;
+            par_ss << argv[argp+1];
+            par_ss >> par_h_New;
+            if (par_ss.peek() == ':')
+            {
+                par_ss.ignore(1);
+                par_ss >> par_v_New;
+            }
+            if (!par_h_New || !par_v_New  || !par_ss.eof())
             {
                 cout << "Can not understand PAR value " << argv[argp] << ", it must be a integer:integer value (e.g. '9:10')" << endl;
                 return -1;
             }
+            argp++;
         }
-        else if (Ztring(argv[argp]) == __T("-w")
-              || Ztring(argv[argp]) == __T("--width-scale")
-              || Ztring(argv[argp]) == __T("-width-scale"))
+        else if (argp + 1<argc
+         && (Ztring(argv[argp]) == __T("-w")
+          || Ztring(argv[argp]) == __T("--width-scale")
+          || Ztring(argv[argp]) == __T("-width-scale")))
         {
-            //stringstream Scale_Xss;
-            //Scale_Xss << argv[2];
-            //Scale_Xss >> wscale_New;
-            wscale_New = 0.9;
+            stringstream wscale_ss;
+            wscale_ss << argv[argp + 1];
+            wscale_ss >> wscale_New;
             if (wscale_New == 0)
             {
                 cout << "Can not understand width scale value " << argv[argp] << ", it must be a real number" << endl;
                 return -1;
             }
+            argp++;
         }
         else if (Ztring(argv[argp]) == __T("-s")
               || Ztring(argv[argp]) == __T("--simulate"))
@@ -102,7 +113,7 @@ int main(int argc, char* argv[])
         return Usage();
     ZtringList List;
     for (size_t i=0; i<FileNames.size(); i++)
-        List+=Dir::GetAllFileNames(FileNames[i], Dir::Include_Dirs);
+        List+=Dir::GetAllFileNames(FileNames[i]);
     std::vector<Structure*> Structures;
     for (ZtringList::iterator Item = List.begin(); Item != List.end(); Item++)
     {
@@ -289,7 +300,6 @@ int main(int argc, char* argv[])
             // Test if must be modified
             char pasp_ToModify = ' ';
             char wscale_ToModify = ' ';
-            if (Track->Width == 720 && (Track->Height == 480 || Track->Height == 486 || Track->Height == 576 || Track->Height == 1080))
             {
                 if (par_h_New && !(Video->pasp.h == 9 && Video->pasp.v == 10))
                     pasp_ToModify = 'Y';
@@ -314,10 +324,6 @@ int main(int argc, char* argv[])
                 }
                 else
                     cout << "Yes|";
-            }
-            else
-            {
-                cout << "Yes|";
             }
 
             // OK

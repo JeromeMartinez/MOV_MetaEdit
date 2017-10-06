@@ -68,19 +68,21 @@ ReturnValue Help()
 //---------------------------------------------------------------------------
 ReturnValue Help_AdID()
 {
-    TEXTOUT("Options related to Ad-iD:");
-    TEXTOUT("  --add-adid Value");
-    TEXTOUT("      Add an Id-iD value");
-    TEXTOUT("      Use Value of \"auto\" for filling automaticly from the file name (11-12 chars)");
-    TEXTOUT("  --add-adid-registry Value");
-    TEXTOUT("      Id-iD is stored with the specified value as registry");
+    TEXTOUT("Options related to Universal Ad ID:");
+    TEXTOUT("  --adid VALUE");
+    TEXTOUT("      Add or modify an Universal Ad ID with the specified VALUE");
+    TEXTOUT("      Use VALUE of \"auto\" for filling automaticly from the file name");
+    TEXTOUT("      (e.g. 11-12 alphanumeric characaters for \"ad-id.org\" registry )");
+    TEXTOUT("  --adid-registry VALUE");
+    TEXTOUT("      Id-iD is stored with the specified VALUE as registry");
     TEXTOUT("      (default is \"ad-id.org\")");
     TEXTOUT("  --simulate, -s");
     TEXTOUT("      Do not modify file (only display of potential modifications)");
     TEXTOUT("");
     TEXTOUT("Examples:");
-    STRINGOUT(string(" --add-adid ADID0000000 FileName.mov").insert(0, Program_Name));
-    STRINGOUT(string(" --add-adid-registry example.com --add-adid ADID0000000 FileName.mov").insert(0, Program_Name));
+    STRINGOUT(string(" --adid auto FileName0000.mov").insert(0, Program_Name));
+    STRINGOUT(string(" --adid ADID0000000 FileName.mov").insert(0, Program_Name));
+    STRINGOUT(string(" --adid-registry example.com --adid ADID0000000 FileName.mov").insert(0, Program_Name));
 
     return ReturnValue_OK;
 }
@@ -88,15 +90,17 @@ ReturnValue Help_AdID()
 //---------------------------------------------------------------------------
 ReturnValue Help_PAR()
 {
-    TEXTOUT("Options related to NTSC aspect ratio:");
-    TEXTOUT("  --par, -p");
-    TEXTOUT("      Modify PAR to 9:10 (--> DAR of 4:3)");
-    TEXTOUT("  --width-scale, -w");
-    TEXTOUT("      Modify width scale to 0.9");
-    TEXTOUT("");
-    TEXTOUT("Limitation: 720x480 or 720x486 or 720x576");
+    TEXTOUT("Options related to pixel aspect ratio:");
+    TEXTOUT("  --par, -p VALUE");
+    TEXTOUT("      Modify PAR to VALUE, \"x:y\" format");
+    TEXTOUT("  --width-scale, -w VALUE");
+    TEXTOUT("      Modify width scale to VALUE, real number");
     TEXTOUT("  --simulate, -s");
     TEXTOUT("      Do not modify file (only display of potential modifications)");
+    TEXTOUT("");
+    TEXTOUT("Examples:");
+    STRINGOUT(string(" --par 9:10 FileName.mov").insert(0, Program_Name));
+    STRINGOUT(string(" --width-scale 0.9 FileName.mov").insert(0, Program_Name));
 
     return ReturnValue_OK;
 }
