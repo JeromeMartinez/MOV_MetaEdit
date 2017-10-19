@@ -50,6 +50,7 @@ private slots:
     void on_Menu_File_Close_triggered();
     void on_Menu_File_Close_All_triggered();
     void on_Table_Widget_itemSelectionChanged();
+    void on_Menu_Help_New_Version_triggered();
     void Show_Context_Menu(const QPoint&);
     void Table_Widget_Changed();
     void CheckUpdateReceived(QNetworkReply*);

@@ -109,6 +109,7 @@
     </property>
     <addaction name="Menu_Help_Help"/>
     <addaction name="Menu_Help_About"/>
+    <addaction name="Menu_Help_New_Version"/>
    </widget>
    <addaction name="Menu_File"/>
    <addaction name="Menu_Help"/>
@@ -286,6 +287,17 @@
    </property>
    <property name="shortcutContext">
     <enum>Qt::ApplicationShortcut</enum>
+   </property>
+  </action>
+  <action name="Menu_Help_New_Version">
+   <property name="text">
+    <string>New version released</string>
+   </property>
+   <property name="statusTip">
+    <string>MOVMetaEdit version %1 is available</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
