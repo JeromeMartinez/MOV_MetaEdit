@@ -10,6 +10,7 @@
 #include <QTableWidgetItem>
 #include <QMainWindow>
 #include <QMenu>
+#include <QNetworkAccessManager>
 
 #include "core.h"
 
@@ -29,11 +30,13 @@ private:
     void dragEnterEvent(QDragEnterEvent* Event);
     void dropEvent(QDropEvent* Event);
     void Update_Table();
+    void CheckUpdate();
 
     Ui::MainWindow* Ui;
     QMenu* Context_Menu;
 
     Core* C;
+    QNetworkAccessManager* CheckUpdate_Handle;
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -49,6 +52,7 @@ private slots:
     void on_Table_Widget_itemSelectionChanged();
     void Show_Context_Menu(const QPoint&);
     void Table_Widget_Changed();
+    void CheckUpdateReceived(QNetworkReply*);
 };
 
 #endif // MAINWINDOW_H

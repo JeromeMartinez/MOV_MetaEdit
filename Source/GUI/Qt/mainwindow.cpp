@@ -9,6 +9,7 @@
 #include <QDropEvent>
 #include <QtCore>
 #include <QUrl>
+#include <QNetworkReply>
 
 #include "core.h"
 #include "mainwindow.h"
@@ -16,6 +17,9 @@
 #include "aboutdialog.h"
 #include "tablewidget.h"
 #include "ui_mainwindow.h"
+
+#include "ZenLib/ZtringListList.h"
+
 
 #if defined(__APPLE__) && QT_VERSION < 0x050400
 #include <CoreFoundation/CFURL.h>
@@ -58,6 +62,8 @@ MainWindow::MainWindow(QWidget *Parent) : QMainWindow(Parent), Ui(new Ui::MainWi
             Ui->Menu_File_Save_All, SLOT(setEnabled(bool)));
 
     Ui->Table_Widget->Update_Table();
+
+    CheckUpdate();
 }
 
 //---------------------------------------------------------------------------
@@ -270,4 +276,22 @@ void MainWindow::Table_Widget_Changed()
         Ui->Menu_File_Close_All->setEnabled(true);
     else
         Ui->Menu_File_Close_All->setEnabled(false);
+}
+
+//---------------------------------------------------------------------------
+void MainWindow::CheckUpdate()
+{
+    CheckUpdate_Handle = new QNetworkAccessManager(this);
+    connect(CheckUpdate_Handle, SIGNAL(finished(QNetworkReply*)), this, SLOT(CheckUpdateReceived(QNetworkReply*)));
+    CheckUpdate_Handle->get(QNetworkRequest(QUrl("http://qt-project.org")));
+}
+
+void MainWindow::CheckUpdateReceived(QNetworkReply* NetworkReply)
+{
+    QByteArray ReplyTemp(NetworkReply->readAll());
+    ZtringListList Reply;
+    Reply.Separator_Set(1, ","); //CSV
+    Reply.Write(ReplyTemp.begin(), ReplyTemp.size());
+
+    CheckUpdate_Handle->deleteLater();
 }
